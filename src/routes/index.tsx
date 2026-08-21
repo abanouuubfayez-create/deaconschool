@@ -1,24 +1,48 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "مدرسة البابا شنودة — نظام الإدارة" },
+      {
+        name: "description",
+        content:
+          "نظام إدارة مدرسة البابا شنودة للألحان والطقس والقبطي، مع استخراج الدرجات والغياب من الصور بالذكاء الاصطناعي بدون مفاتيح API.",
+      },
+      { property: "og:title", content: "مدرسة البابا شنودة — نظام الإدارة" },
+      {
+        property: "og:description",
+        content: "إدارة الطلاب والدرجات والغياب، وقراءة كشوف OCR بالذكاء الاصطناعي.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
+    <main
+      dir="rtl"
+      className="flex min-h-screen items-center justify-center bg-background px-6 py-16"
     >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+      <div className="w-full max-w-xl rounded-2xl border border-border bg-card p-8 text-center shadow-sm">
+        <h1 className="text-2xl font-bold text-card-foreground">مدرسة البابا شنودة</h1>
+        <p className="mt-3 text-sm leading-7 text-muted-foreground">
+          نظام الإدارة يعمل الآن بالذكاء الاصطناعي المدمج — لا حاجة لمفتاح Google أو Anthropic،
+          ولن تظهر رسالة تجاوز الحصة المجانية بعد اليوم.
+        </p>
+        <a
+          href="/school.html"
+          className="mt-7 inline-flex items-center justify-center rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+        >
+          فتح البرنامج
+        </a>
+        <p className="mt-4 text-xs text-muted-foreground">
+          اختر «Lovable AI» في قائمة مزود الذكاء الاصطناعي عند رفع صور الكشوف.
+        </p>
+      </div>
+    </main>
   );
 }
