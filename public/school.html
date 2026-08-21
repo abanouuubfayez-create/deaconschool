@@ -29347,5 +29347,11 @@ th { background:#0d2645; color:#fff; font-weight:700; font-size:10.5px; }
 })();
 </script>
 <!-- ═══════════════ /v37.1 ═══════════════ -->
+<script>
+  try { document.addEventListener('DOMContentLoaded', function () {
+    if (typeof onAIProviderChange === 'function') onAIProviderChange();
+    if (typeof onAbsAIProviderChange === 'function') onAbsAIProviderChange();
+  }); } catch (e) { }
+</script>
 </body>
 </html>
