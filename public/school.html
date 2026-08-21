@@ -13260,7 +13260,8 @@ var qrcode=function(){function i(t,r){function a(t,r){g=function(t){for(var r=ne
         function _removeGradeImg(i) { (window._gradeImagesB64 || []).splice(i, 1); _renderGradeThumbs(); document.getElementById('grade-ai-result').innerHTML = ''; }
 
         // ── Lovable AI (بدون مفتاح): يمر عبر خادم المشروع ──
-        const LOVABLE_AI_ENDPOINT = (location.protocol.startsWith('http') ? location.origin : 'https://id-preview--302cdddc-4e95-4469-9ed3-ffad335ba7ca.lovable.app') + '/api/public/vision';
+        const LOVABLE_AI_BASE = 'https://project--302cdddc-4e95-4469-9ed3-ffad335ba7ca-dev.lovable.app';
+        const LOVABLE_AI_ENDPOINT = ((location.protocol.startsWith('http') && !location.hostname.startsWith('id-preview--')) ? location.origin : LOVABLE_AI_BASE) + '/api/public/vision';
         async function _callLovableVision(prompt, images) {
             const resp = await fetch(LOVABLE_AI_ENDPOINT, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
