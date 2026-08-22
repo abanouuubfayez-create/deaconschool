@@ -14506,7 +14506,16 @@ ${students.join(' | ')}
         // =========================================================
         // GRADES
         // =========================================================
-        function getGrade(sid, term, subj, field) { const g = DB.grades[sid + '_t' + term + '_' + subj]; return g ? (g[field] || 0) : 0; }
+        function getGrade(sid, term, subj, field) { const g = DB.grades[sid + '_t' + term + '_' + subj]; return g ? (+g[field] || 0) : 0; }
+        // القيمة الخام: undefined لو الخانة لسه فاضية، و 0 لو الطالب فعلاً جاب صفر
+        function getGradeRaw(sid, term, subj, field) {
+            const g = DB.grades[sid + '_t' + term + '_' + subj];
+            if (!g) return undefined;
+            const v = g[field];
+            if (v === undefined || v === null || v === '') return undefined;
+            return +v;
+        }
+        function hasGradeVal(sid, term, subj, field) { return getGradeRaw(sid, term, subj, field) !== undefined; }
 
         // =========================================================
         // تقرير الرصد الشامل
