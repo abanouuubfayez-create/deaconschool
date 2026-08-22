@@ -13934,22 +13934,37 @@ ${students.join(' | ')}
 
             function fuzzyStudent(nm) {
                 if (!nm) return null;
-                nm = nm.trim();
+                nm = String(nm).trim();
+                const n = _normName(nm);
                 let st = students.find(s => s.name === nm); if (st) return st;
-                st = students.find(s => s.name.includes(nm) || nm.includes(s.name)); if (st) return st;
-                // match on first two words
-                const parts = nm.split(' ').slice(0, 2).join(' ');
-                return students.find(s => s.name.startsWith(parts)) || null;
+                st = students.find(s => _normName(s.name) === n); if (st) return st;
+                st = students.find(s => _normName(s.name).includes(n) || n.includes(_normName(s.name))); if (st) return st;
+                const parts = n.split(' ').slice(0, 2).join(' ');
+                if (parts.length > 3) { st = students.find(s => _normName(s.name).startsWith(parts)); if (st) return st; }
+                return null;
+            }
+            // توحيد اسم المادة مع المواد المسجلة في المرحلة (وإلا الدرجة تتخزن باسم مختلف فتظهر الخانات فاضية)
+            function canonSubject(sn) {
+                if (!sn) return null;
+                const n = _normName(sn);
+                let s = subjs.find(x => x.name === sn) || subjs.find(x => _normName(x.name) === n);
+                if (s) return s.name;
+                s = subjs.find(x => _normName(x.name).includes(n) || n.includes(_normName(x.name)));
+                return s ? s.name : null;
             }
 
             // ── Path A: from AI image analysis ─────────────────────────────────────
             if (_excelGradesData.fromImage && _excelGradesData.rows) {
+                const missStudents = [], missSubjects = new Set();
                 _excelGradesData.rows.forEach(row => {
-                    const st = fuzzyStudent(row.name); if (!st) return;
+                    const st = fuzzyStudent(row.name);
+                    if (!st) { missStudents.push(row.name); return; }
                     Object.entries(row.grades || {}).forEach(([subjName, g]) => {
-                        if (filterSubj && subjName !== filterSubj) return;
+                        const canon = canonSubject(subjName);
+                        if (!canon) { missSubjects.add(subjName); return; }
+                        if (filterSubj && _normName(canon) !== _normName(filterSubj)) return;
                         ['behavior', 'oral', 'attendance', 'written'].forEach(f => {
-                            if (g[f] !== undefined && g[f] !== null && g[f] !== 0) setGradeSafe(st.id, term, subjName, f, +g[f] || 0, _giAllowOverwrite, _giCounters);
+                            if (g[f] !== undefined && g[f] !== null) setGradeSafe(st.id, term, canon, f, +g[f] || 0, _giAllowOverwrite, _giCounters);
                         });
                         applied++;
                     });
@@ -13957,8 +13972,12 @@ ${students.join(' | ')}
                 saveDB().catch(() => showToast('⚠️ فشل الحفظ — جرب مرة أخرى')); closeModal('modal-excel-grades'); renderExamsTable();
                 _refreshUndoBtn();
                 showImportSummaryToast('من الصورة', _giCounters, _giAllowOverwrite);
+                if (missStudents.length) setTimeout(() => showToast('⚠️ ' + missStudents.length + ' اسم مش موجود في المرحلة: ' + missStudents.slice(0, 3).join('، ') + (missStudents.length > 3 ? '…' : '')), 1600);
+                if (missSubjects.size) setTimeout(() => showToast('⚠️ مواد غير معروفة: ' + Array.from(missSubjects).slice(0, 3).join('، ')), 3200);
+                if (!applied) setTimeout(() => showToast('⚠️ لم تُسجَّل أي درجة — تأكد من المرحلة والترم وأسماء الطلبة'), 4800);
                 return;
             }
+
 
             // ── Path B: from Excel/CSV raw data ────────────────────────────────────
             const data = _excelGradesData.raw || _excelGradesData;
