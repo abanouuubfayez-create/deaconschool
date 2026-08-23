@@ -13189,63 +13189,106 @@ var qrcode=function(){function i(t,r){function a(t,r){g=function(t){for(var r=ne
         }
 
         // ── شحذ خفيف (Unsharp Mask) لزيادة وضوح حواف الأرقام المكتوبة بخط اليد ──
-        function _sharpenCanvas(ctx, w, h, amount) {
-            amount = amount || 0.35;
-            const src = ctx.getImageData(0, 0, w, h);
-            const s = src.data;
-            const out = ctx.createImageData(w, h);
-            const o = out.data;
-            // كيرنل شحذ بسيط 3x3
-            const k = [0, -1, 0, -1, 5, -1, 0, -1, 0];
-            for (let y = 0; y < h; y++) {
-                for (let x = 0; x < w; x++) {
-                    const idx = (y * w + x) * 4;
-                    if (x === 0 || y === 0 || x === w - 1 || y === h - 1) {
-                        o[idx] = s[idx]; o[idx + 1] = s[idx + 1]; o[idx + 2] = s[idx + 2]; o[idx + 3] = s[idx + 3];
-                        continue;
-                    }
-                    for (let c = 0; c < 3; c++) {
-                        let sum = 0, ki = 0;
-                        for (let dy = -1; dy <= 1; dy++) {
-                            for (let dx = -1; dx <= 1; dx++) {
-                                const nIdx = ((y + dy) * w + (x + dx)) * 4 + c;
-                                sum += s[nIdx] * k[ki++];
-                            }
-                        }
-                        const sharpened = s[idx + c] * (1 - amount) + sum * amount;
-                        o[idx + c] = Math.max(0, Math.min(255, sharpened));
-                    }
-                    o[idx + 3] = s[idx + 3];
+        function _enhanceDocumentCanvas(ctx, w, h) {
+            try {
+                const imgData = ctx.getImageData(0, 0, w, h);
+                const d = imgData.data;
+                const len = d.length;
+
+                // 1. حساب عينات من هيستوجرام الإضاءة لمعرفة مستوى سواد الحبر وبياض الورقة
+                const hist = new Uint32Array(256);
+                const step = Math.max(1, Math.floor(len / (4 * 20000))); // فحص 20 ألف نقطة موزعة لسرعة فائقة
+                let totalSamples = 0;
+                for (let i = 0; i < len; i += 4 * step) {
+                    const lum = (d[i] * 299 + d[i + 1] * 587 + d[i + 2] * 114) / 1000;
+                    hist[Math.min(255, Math.floor(lum))]++;
+                    totalSamples++;
                 }
+
+                // حساب النقاط المرجعية للأسود والأبيض
+                let count = 0;
+                let blackPoint = 30;
+                let whitePoint = 225;
+                const pLow = totalSamples * 0.05;
+                const pHigh = totalSamples * 0.92;
+                for (let b = 0; b < 256; b++) {
+                    count += hist[b];
+                    if (count >= pLow && blackPoint === 30) blackPoint = Math.max(15, b);
+                    if (count >= pHigh) { whitePoint = Math.min(250, Math.max(180, b)); break; }
+                }
+
+                const range = Math.max(30, whitePoint - blackPoint);
+                const lut = new Uint8Array(256);
+                for (let i = 0; i < 256; i++) {
+                    let v = ((i - blackPoint) / range) * 255;
+                    // تباين منحنى S خفيف لإبراز الأرقام وتبييض الورق الرمادي
+                    if (v < 0) v = 0; else if (v > 255) v = 255;
+                    lut[i] = Math.round(v);
+                }
+
+                // تطبيق جدول الألوان (LUT)
+                for (let i = 0; i < len; i += 4) {
+                    d[i] = lut[d[i]];
+                    d[i + 1] = lut[d[i + 1]];
+                    d[i + 2] = lut[d[i + 2]];
+                }
+
+                // 2. تطبيق فلتير شحذ ذكي (Smart Unsharp Mask) سريع لإبراز حواف الأرقام ودوائر الصفر 0 والنقاط ٠
+                const out = ctx.createImageData(w, h);
+                const od = out.data;
+                const amount = 0.42; // قوة الشحذ المثالية لقراءة الأرقام
+
+                for (let y = 0; y < h; y++) {
+                    const yOffset = y * w * 4;
+                    const prevYOffset = (y > 0 ? y - 1 : y) * w * 4;
+                    const nextYOffset = (y < h - 1 ? y + 1 : y) * w * 4;
+
+                    for (let x = 0; x < w; x++) {
+                        const idx = yOffset + x * 4;
+                        if (x === 0 || y === 0 || x === w - 1 || y === h - 1) {
+                            od[idx] = d[idx]; od[idx + 1] = d[idx + 1]; od[idx + 2] = d[idx + 2]; od[idx + 3] = d[idx + 3];
+                            continue;
+                        }
+                        const leftIdx = yOffset + (x - 1) * 4;
+                        const rightIdx = yOffset + (x + 1) * 4;
+                        const topIdx = prevYOffset + x * 4;
+                        const bottomIdx = nextYOffset + x * 4;
+
+                        for (let c = 0; c < 3; c++) {
+                            const center = d[idx + c];
+                            const neighborAvg = (d[leftIdx + c] + d[rightIdx + c] + d[topIdx + c] + d[bottomIdx + c]) * 0.25;
+                            const sharpVal = center + (center - neighborAvg) * amount;
+                            od[idx + c] = sharpVal < 0 ? 0 : sharpVal > 255 ? 255 : sharpVal;
+                        }
+                        od[idx + 3] = d[idx + 3];
+                    }
+                }
+                ctx.putImageData(out, 0, 0);
+            } catch (e) {
+                console.warn('Document enhancement fallback:', e);
             }
-            ctx.putImageData(out, 0, 0);
         }
 
         function _compressGradeImage(file) {
             return new Promise((resolve, reject) => {
-                const MAX_DIM = 2600; // أقصى عرض أو ارتفاع (دقة أعلى لقراءة الأرقام المكتوبة بخط اليد)
-                const MIN_DIM = 1600; // أقل عرض/ارتفاع مقبول — نكبّر الصور الصغيرة عشان الـ AI يقرأ الأرقام بدقة
-                const MAX_UPSCALE = 1.8; // سقف التكبير عشان منبوظش الصورة كتير
-                const QUALITY = 0.95; // جودة JPEG
-                // شحذ فقط للصور اللي حجمها بعد التعديل معقول (تفادي إبطاء الصور الكبيرة جدًا)
-                const SHARPEN_MAX_PIXELS = 2600 * 2600;
+                const MAX_DIM = 3200; // دقة فائقة الوضوح (3200px) لحفظ تفاصيل الأرقام والكسور والدوائر
+                const MIN_DIM = 1800; // تكبير الصور المصغّرة حتى يقرأ الذكاء الاصطناعي الأرقام بدقة بالغة
+                const MAX_UPSCALE = 2.2;
+                const QUALITY = 0.96; // جودة JPEG عالية جدًا بدون تشويش
                 const reader = new FileReader();
                 reader.onerror = reject;
                 reader.onload = ev => {
                     const img = new Image();
                     img.onerror = () => {
-                        // إذا فشل التحميل كصورة، أرسلها كما هي
                         resolve({ b64: ev.target.result.split(',')[1], mtype: file.type || 'image/jpeg', dataUrl: ev.target.result });
                     };
                     img.onload = () => {
                         let w = img.naturalWidth, h = img.naturalHeight;
                         if (w > MAX_DIM || h > MAX_DIM) {
-                            // تصغير الصور الكبيرة أوي
                             const ratio = Math.min(MAX_DIM / w, MAX_DIM / h);
                             w = Math.round(w * ratio);
                             h = Math.round(h * ratio);
                         } else if (w < MIN_DIM && h < MIN_DIM) {
-                            // تكبير الصور الصغيرة (صور موبايل بعيدة/مضغوطة) لحد MIN_DIM بحد أقصى للتكبير
                             const upRatio = Math.min(MIN_DIM / Math.max(w, h), MAX_UPSCALE);
                             w = Math.round(w * upRatio);
                             h = Math.round(h * upRatio);
@@ -13253,19 +13296,20 @@ var qrcode=function(){function i(t,r){function a(t,r){g=function(t){for(var r=ne
                         const canvas = document.createElement('canvas');
                         canvas.width = w;
                         canvas.height = h;
-                        const ctx = canvas.getContext('2d');
-                        // رفع التباين والحدة شوية قبل الرسم — بيساعد الـ AI يميّز الأرقام المكتوبة بخط اليد
-                        // عن خلفية الجدول والخطوط الرفيعة، خصوصًا في الصور اللي إضاءتها ضعيفة
-                        if ('filter' in ctx) ctx.filter = 'contrast(1.18) brightness(1.04) saturate(1.05)';
+                        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                        ctx.imageSmoothingEnabled = true;
+                        ctx.imageSmoothingQuality = 'high';
+
+                        // تعزيز إضافي لحدة وتباين الصورة على مستوى الكانفاس
+                        if ('filter' in ctx) ctx.filter = 'contrast(1.22) brightness(1.06) saturate(1.02)';
                         ctx.drawImage(img, 0, 0, w, h);
                         ctx.filter = 'none';
-                        // شحذ خفيف إضافي (unsharp mask) لو حجم الصورة مش ضخم جدًا (أداء)
-                        try {
-                            if (w * h <= SHARPEN_MAX_PIXELS) _sharpenCanvas(ctx, w, h, 0.3);
-                        } catch (e) { /* لو المتصفح منع قراءة بيانات الكانفاس، نكمل من غير شحذ */ }
+
+                        // معالجة متقدمة لرفع الجودة وإبراز حواف الأرقام بدقة
+                        _enhanceDocumentCanvas(ctx, w, h);
+
                         const dataUrl = canvas.toDataURL('image/jpeg', QUALITY);
                         const b64 = dataUrl.split(',')[1];
-                        // تحرير الذاكرة
                         canvas.width = 0; canvas.height = 0;
                         resolve({ b64, mtype: 'image/jpeg', dataUrl });
                     };
@@ -14566,6 +14610,13 @@ ${students.join(' | ')}
             return +v;
         }
         function hasGradeVal(sid, term, subj, field) { return getGradeRaw(sid, term, subj, field) !== undefined; }
+        function hasAnyGradeVal(sid, term, stage) {
+            const subjs = getActiveSubjects(stage, String(term));
+            return subjs.some(s => ['behavior', 'oral', 'attendance', 'written'].some(f => (s[f] || 0) > 0 && hasGradeVal(sid, String(term), s.name, f)));
+        }
+        function hasAnyAnnualGrade(sid, stage) {
+            return [1, 2, 3].some(t => hasAnyGradeVal(sid, String(t), stage));
+        }
 
         // =========================================================
         // تقرير الرصد الشامل
@@ -17007,7 +17058,8 @@ body{font-family:'Cairo',sans-serif;direction:rtl;background:#fff;color:#111;fon
                 const pct = max > 0 ? total / max * 100 : 0;
                 const mercyInfo = getMercyInfo(rawTotal, max);
                 const gc = pct >= DB.settings.vgPct ? 'b-s' : pct >= DB.settings.passPct ? 'b-w' : 'b-d';
-                const isFailed = rawTotal > 0 && pct < DB.settings.passPct;
+                const sHasAnyGrade = subjs.some(s => ['behavior', 'oral', 'attendance', 'written'].some(f => (s[f] || 0) > 0 && hasGradeVal(st.id, String(term), s.name, f)));
+                const isFailed = sHasAnyGrade && pct < DB.settings.passPct;
                 const isRepeater = (st.status || '').indexOf('راسب') !== -1;
                 const rowStyle = isFailed ? 'background:#fff5f5' : isRepeater ? 'background:#fef9c3' : '';
                 let cells = '';
@@ -18084,8 +18136,9 @@ html,body{font-family:'Cairo','Tajawal','Segoe UI',Tahoma,Arial,sans-serif;direc
                 const rawTotal = calcTotal(st.id, String(term), stage);
                 const total = applyMercyGrade(rawTotal, max);
                 const pct = max > 0 ? total / max * 100 : 0;
-                // Skip students with no grades at all
-                if (rawTotal === 0) return;
+                const hasAny = typeof hasAnyGradeVal === 'function' ? hasAnyGradeVal(st.id, String(term), stage) : rawTotal > 0;
+                // إظهار الطلاب الذين رُصدت لهم درجات (حتى وإن كانت صفراً) وتخطي غير المرصودين فقط
+                if (!hasAny && rawTotal === 0) return;
 
                 const gradeText = getGradeText(pct);
                 const gradeColor = getGradeColor(pct);
@@ -18235,13 +18288,14 @@ html,body{font-family:'Cairo','Tajawal','Segoe UI',Tahoma,Arial,sans-serif;direc
 
              // Pre-compute annual totals for ranking
              const annualMap = students.map(st => {
-                 const t1 = calcTotal(st.id, '1', stage);
-                 const t2 = calcTotal(st.id, '2', stage);
-                 const t3 = calcTotal(st.id, '3', stage);
-                 const raw = t1 + t2 + t3;
-                 const total = applyMercyGrade(raw, annualMax);
-                 return { id: st.id, total };
-             }).filter(x => x.total > 0).sort((a, b) => b.total - a.total);
+                const t1 = calcTotal(st.id, '1', stage);
+                const t2 = calcTotal(st.id, '2', stage);
+                const t3 = calcTotal(st.id, '3', stage);
+                const raw = t1 + t2 + t3;
+                const total = applyMercyGrade(raw, annualMax);
+                const hasAny = typeof hasAnyAnnualGrade === 'function' ? hasAnyAnnualGrade(st.id, stage) : raw > 0;
+                return { id: st.id, total, hasAny };
+            }).filter(x => x.hasAny || x.total > 0).sort((a, b) => b.total - a.total);
              const rankOf = (sid) => {
                  const i = annualMap.findIndex(x => x.id === sid);
                  return i >= 0 ? (i + 1) : null;
@@ -18252,10 +18306,11 @@ html,body{font-family:'Cairo','Tajawal','Segoe UI',Tahoma,Arial,sans-serif;direc
 
              students.forEach(st => {
                  const t1Raw = calcTotal(st.id, '1', stage);
-                 const t2Raw = calcTotal(st.id, '2', stage);
-                 const t3Raw = calcTotal(st.id, '3', stage);
-                 const annualRaw = t1Raw + t2Raw + t3Raw;
-                 if (annualRaw === 0) return;
+                const t2Raw = calcTotal(st.id, '2', stage);
+                const t3Raw = calcTotal(st.id, '3', stage);
+                const annualRaw = t1Raw + t2Raw + t3Raw;
+                const hasAny = typeof hasAnyAnnualGrade === 'function' ? hasAnyAnnualGrade(st.id, stage) : annualRaw > 0;
+                if (!hasAny && annualRaw === 0) return;
 
                  const annualTotal = applyMercyGrade(annualRaw, annualMax);
                  const annualPct = annualMax > 0 ? annualTotal / annualMax * 100 : 0;

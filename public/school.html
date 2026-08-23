@@ -13188,34 +13188,128 @@ var qrcode=function(){function i(t,r){function a(t,r){g=function(t){for(var r=ne
                 : '🔑 احصل على مفتاح من <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" style="color:#15803d;font-weight:700">Anthropic Console</a> — يُحفظ على جهازك فقط.';
         }
 
+        // ── شحذ خفيف (Unsharp Mask) لزيادة وضوح حواف الأرقام المكتوبة بخط اليد ──
+        function _enhanceDocumentCanvas(ctx, w, h) {
+            try {
+                const imgData = ctx.getImageData(0, 0, w, h);
+                const d = imgData.data;
+                const len = d.length;
+
+                // 1. حساب عينات من هيستوجرام الإضاءة لمعرفة مستوى سواد الحبر وبياض الورقة
+                const hist = new Uint32Array(256);
+                const step = Math.max(1, Math.floor(len / (4 * 20000))); // فحص 20 ألف نقطة موزعة لسرعة فائقة
+                let totalSamples = 0;
+                for (let i = 0; i < len; i += 4 * step) {
+                    const lum = (d[i] * 299 + d[i + 1] * 587 + d[i + 2] * 114) / 1000;
+                    hist[Math.min(255, Math.floor(lum))]++;
+                    totalSamples++;
+                }
+
+                // حساب النقاط المرجعية للأسود والأبيض
+                let count = 0;
+                let blackPoint = 30;
+                let whitePoint = 225;
+                const pLow = totalSamples * 0.05;
+                const pHigh = totalSamples * 0.92;
+                for (let b = 0; b < 256; b++) {
+                    count += hist[b];
+                    if (count >= pLow && blackPoint === 30) blackPoint = Math.max(15, b);
+                    if (count >= pHigh) { whitePoint = Math.min(250, Math.max(180, b)); break; }
+                }
+
+                const range = Math.max(30, whitePoint - blackPoint);
+                const lut = new Uint8Array(256);
+                for (let i = 0; i < 256; i++) {
+                    let v = ((i - blackPoint) / range) * 255;
+                    // تباين منحنى S خفيف لإبراز الأرقام وتبييض الورق الرمادي
+                    if (v < 0) v = 0; else if (v > 255) v = 255;
+                    lut[i] = Math.round(v);
+                }
+
+                // تطبيق جدول الألوان (LUT)
+                for (let i = 0; i < len; i += 4) {
+                    d[i] = lut[d[i]];
+                    d[i + 1] = lut[d[i + 1]];
+                    d[i + 2] = lut[d[i + 2]];
+                }
+
+                // 2. تطبيق فلتير شحذ ذكي (Smart Unsharp Mask) سريع لإبراز حواف الأرقام ودوائر الصفر 0 والنقاط ٠
+                const out = ctx.createImageData(w, h);
+                const od = out.data;
+                const amount = 0.42; // قوة الشحذ المثالية لقراءة الأرقام
+
+                for (let y = 0; y < h; y++) {
+                    const yOffset = y * w * 4;
+                    const prevYOffset = (y > 0 ? y - 1 : y) * w * 4;
+                    const nextYOffset = (y < h - 1 ? y + 1 : y) * w * 4;
+
+                    for (let x = 0; x < w; x++) {
+                        const idx = yOffset + x * 4;
+                        if (x === 0 || y === 0 || x === w - 1 || y === h - 1) {
+                            od[idx] = d[idx]; od[idx + 1] = d[idx + 1]; od[idx + 2] = d[idx + 2]; od[idx + 3] = d[idx + 3];
+                            continue;
+                        }
+                        const leftIdx = yOffset + (x - 1) * 4;
+                        const rightIdx = yOffset + (x + 1) * 4;
+                        const topIdx = prevYOffset + x * 4;
+                        const bottomIdx = nextYOffset + x * 4;
+
+                        for (let c = 0; c < 3; c++) {
+                            const center = d[idx + c];
+                            const neighborAvg = (d[leftIdx + c] + d[rightIdx + c] + d[topIdx + c] + d[bottomIdx + c]) * 0.25;
+                            const sharpVal = center + (center - neighborAvg) * amount;
+                            od[idx + c] = sharpVal < 0 ? 0 : sharpVal > 255 ? 255 : sharpVal;
+                        }
+                        od[idx + 3] = d[idx + 3];
+                    }
+                }
+                ctx.putImageData(out, 0, 0);
+            } catch (e) {
+                console.warn('Document enhancement fallback:', e);
+            }
+        }
+
         function _compressGradeImage(file) {
             return new Promise((resolve, reject) => {
-                const MAX_DIM = 2400; // أقصى عرض أو ارتفاع (دقة أعلى لقراءة الأرقام المكتوبة بخط اليد)
-                const QUALITY = 0.95; // جودة JPEG
+                const MAX_DIM = 3200; // دقة فائقة الوضوح (3200px) لحفظ تفاصيل الأرقام والكسور والدوائر
+                const MIN_DIM = 1800; // تكبير الصور المصغّرة حتى يقرأ الذكاء الاصطناعي الأرقام بدقة بالغة
+                const MAX_UPSCALE = 2.2;
+                const QUALITY = 0.96; // جودة JPEG عالية جدًا بدون تشويش
                 const reader = new FileReader();
                 reader.onerror = reject;
                 reader.onload = ev => {
                     const img = new Image();
                     img.onerror = () => {
-                        // إذا فشل التحميل كصورة، أرسلها كما هي
                         resolve({ b64: ev.target.result.split(',')[1], mtype: file.type || 'image/jpeg', dataUrl: ev.target.result });
                     };
                     img.onload = () => {
                         let w = img.naturalWidth, h = img.naturalHeight;
-                        // تصغير فقط إذا كانت أكبر من الحد
                         if (w > MAX_DIM || h > MAX_DIM) {
                             const ratio = Math.min(MAX_DIM / w, MAX_DIM / h);
                             w = Math.round(w * ratio);
                             h = Math.round(h * ratio);
+                        } else if (w < MIN_DIM && h < MIN_DIM) {
+                            const upRatio = Math.min(MIN_DIM / Math.max(w, h), MAX_UPSCALE);
+                            w = Math.round(w * upRatio);
+                            h = Math.round(h * upRatio);
                         }
                         const canvas = document.createElement('canvas');
                         canvas.width = w;
                         canvas.height = h;
-                        const ctx = canvas.getContext('2d');
+                        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                        ctx.imageSmoothingEnabled = true;
+                        ctx.imageSmoothingQuality = 'high';
+
+                        // تعزيز إضافي لحدة وتباين الصورة على مستوى الكانفاس
+                        if ('filter' in ctx) ctx.filter = 'contrast(1.22) brightness(1.06) saturate(1.02)';
                         ctx.drawImage(img, 0, 0, w, h);
+                        ctx.filter = 'none';
+
+                        // معالجة متقدمة لرفع الجودة وإبراز حواف الأرقام بدقة
+                        _enhanceDocumentCanvas(ctx, w, h);
+
                         const dataUrl = canvas.toDataURL('image/jpeg', QUALITY);
                         const b64 = dataUrl.split(',')[1];
-                        // تحرير الذاكرة
                         canvas.width = 0; canvas.height = 0;
                         resolve({ b64, mtype: 'image/jpeg', dataUrl });
                     };
@@ -14516,6 +14610,13 @@ ${students.join(' | ')}
             return +v;
         }
         function hasGradeVal(sid, term, subj, field) { return getGradeRaw(sid, term, subj, field) !== undefined; }
+        function hasAnyGradeVal(sid, term, stage) {
+            const subjs = getActiveSubjects(stage, String(term));
+            return subjs.some(s => ['behavior', 'oral', 'attendance', 'written'].some(f => (s[f] || 0) > 0 && hasGradeVal(sid, String(term), s.name, f)));
+        }
+        function hasAnyAnnualGrade(sid, stage) {
+            return [1, 2, 3].some(t => hasAnyGradeVal(sid, String(t), stage));
+        }
 
         // =========================================================
         // تقرير الرصد الشامل
@@ -16957,23 +17058,28 @@ body{font-family:'Cairo',sans-serif;direction:rtl;background:#fff;color:#111;fon
                 const pct = max > 0 ? total / max * 100 : 0;
                 const mercyInfo = getMercyInfo(rawTotal, max);
                 const gc = pct >= DB.settings.vgPct ? 'b-s' : pct >= DB.settings.passPct ? 'b-w' : 'b-d';
-                const isFailed = rawTotal > 0 && pct < DB.settings.passPct;
+                const sHasAnyGrade = subjs.some(s => ['behavior', 'oral', 'attendance', 'written'].some(f => (s[f] || 0) > 0 && hasGradeVal(st.id, String(term), s.name, f)));
+                const isFailed = sHasAnyGrade && pct < DB.settings.passPct;
                 const isRepeater = (st.status || '').indexOf('راسب') !== -1;
                 const rowStyle = isFailed ? 'background:#fff5f5' : isRepeater ? 'background:#fef9c3' : '';
                 let cells = '';
                 subjs.forEach(s => {
                     const flds = ['behavior', 'oral', 'attendance', 'written'].filter(f => s[f] > 0);
+                    let sHas = false;
                     flds.forEach((f, fi) => {
-                        const val = getGrade(st.id, String(term), s.name, f);
-                        const over = val > s[f] ? ';color:#c0392b;font-weight:900' : '';
-                        cells += `<td style="text-align:center;font-size:12px;${fi === 0 ? 'border-left:2px solid #ddd;' : ''}${over}">${val > 0 ? val : '<span style="color:#bbb">—</span>'}</td>`;
+                        const raw = getGradeRaw(st.id, String(term), s.name, f);
+                        const has = raw !== undefined;
+                        if (has) sHas = true;
+                        const val = has ? raw : 0;
+                        const over = has && val > s[f] ? ';color:#c0392b;font-weight:900' : '';
+                        cells += `<td style="text-align:center;font-size:12px;${fi === 0 ? 'border-left:2px solid #ddd;' : ''}${over}">${has ? val : '<span style="color:#bbb">—</span>'}</td>`;
                     });
                     if (flds.length) {
                         const sTotal = calcSubjTotal(st.id, String(term), s.name);
                         const sMax = getSubjMax(s.name, stage);
                         const sPct = sMax > 0 ? sTotal / sMax * 100 : 0;
                         const sColor = sPct < DB.settings.passPct && sTotal > 0 ? '#c0392b' : '#0d2645';
-                        cells += `<td style="text-align:center;border-left:2px solid rgba(201,162,39,.35);background:rgba(255,215,0,.06);font-weight:900;font-size:12px;color:${sColor}">${sTotal > 0 ? sTotal : '<span style="color:#bbb">—</span>'}<span style="font-size:9px;color:#999;font-weight:400">/${sMax}</span></td>`;
+                        cells += `<td style="text-align:center;border-left:2px solid rgba(201,162,39,.35);background:rgba(255,215,0,.06);font-weight:900;font-size:12px;color:${sColor}">${sHas ? sTotal : '<span style="color:#bbb">—</span>'}<span style="font-size:9px;color:#999;font-weight:400">/${sMax}</span></td>`;
                     }
                 });
                 return `<tr style="${rowStyle}">
@@ -18030,8 +18136,9 @@ html,body{font-family:'Cairo','Tajawal','Segoe UI',Tahoma,Arial,sans-serif;direc
                 const rawTotal = calcTotal(st.id, String(term), stage);
                 const total = applyMercyGrade(rawTotal, max);
                 const pct = max > 0 ? total / max * 100 : 0;
-                // Skip students with no grades at all
-                if (rawTotal === 0) return;
+                const hasAny = typeof hasAnyGradeVal === 'function' ? hasAnyGradeVal(st.id, String(term), stage) : rawTotal > 0;
+                // إظهار الطلاب الذين رُصدت لهم درجات (حتى وإن كانت صفراً) وتخطي غير المرصودين فقط
+                if (!hasAny && rawTotal === 0) return;
 
                 const gradeText = getGradeText(pct);
                 const gradeColor = getGradeColor(pct);
@@ -18050,11 +18157,15 @@ html,body{font-family:'Cairo','Tajawal','Segoe UI',Tahoma,Arial,sans-serif;direc
                     const sPct = sMax > 0 ? sTotal / sMax * 100 : 0;
                     const sColor = sPct >= (DB.settings.passPct || 50) ? '#155724' : (sTotal > 0 ? '#991b1b' : '#888');
                     let cells = '';
+                    let sHas = false;
                     allFields.forEach(f => {
                         if ((s[f] || 0) > 0) {
-                            const v = getGrade(st.id, String(term), s.name, f);
-                            const over = v > s[f] ? 'color:#c0392b;font-weight:900' : '';
-                            cells += `<td style="${over}">${v > 0 ? v : '—'}<br><span style="font-size:8.5px;color:#888;font-weight:400">/${s[f]}</span></td>`;
+                            const raw = getGradeRaw(st.id, String(term), s.name, f);
+                            const has = raw !== undefined;
+                            if (has) sHas = true;
+                            const v = has ? raw : 0;
+                            const over = has && v > s[f] ? 'color:#c0392b;font-weight:900' : '';
+                            cells += `<td style="${over}">${has ? v : '—'}<br><span style="font-size:8.5px;color:#888;font-weight:400">/${s[f]}</span></td>`;
                         } else {
                             cells += `<td style="color:#ccc">—</td>`;
                         }
@@ -18062,7 +18173,7 @@ html,body{font-family:'Cairo','Tajawal','Segoe UI',Tahoma,Arial,sans-serif;direc
                     rows += `<tr>
                         <td class="subject">${s.name}${s.teacher ? `<div class="teacher">👤 ${s.teacher}</div>` : ''}</td>
                         ${cells}
-                        <td class="total-cell">${sTotal > 0 ? sTotal : '—'}</td>
+                        <td class="total-cell">${sHas ? sTotal : '—'}</td>
                         <td style="color:#666;font-weight:600">${sMax}</td>
                         <td class="pct-cell" style="color:${sColor}">${sMax > 0 ? sPct.toFixed(1) + '%' : '—'}</td>
                     </tr>`;
@@ -18177,13 +18288,14 @@ html,body{font-family:'Cairo','Tajawal','Segoe UI',Tahoma,Arial,sans-serif;direc
 
              // Pre-compute annual totals for ranking
              const annualMap = students.map(st => {
-                 const t1 = calcTotal(st.id, '1', stage);
-                 const t2 = calcTotal(st.id, '2', stage);
-                 const t3 = calcTotal(st.id, '3', stage);
-                 const raw = t1 + t2 + t3;
-                 const total = applyMercyGrade(raw, annualMax);
-                 return { id: st.id, total };
-             }).filter(x => x.total > 0).sort((a, b) => b.total - a.total);
+                const t1 = calcTotal(st.id, '1', stage);
+                const t2 = calcTotal(st.id, '2', stage);
+                const t3 = calcTotal(st.id, '3', stage);
+                const raw = t1 + t2 + t3;
+                const total = applyMercyGrade(raw, annualMax);
+                const hasAny = typeof hasAnyAnnualGrade === 'function' ? hasAnyAnnualGrade(st.id, stage) : raw > 0;
+                return { id: st.id, total, hasAny };
+            }).filter(x => x.hasAny || x.total > 0).sort((a, b) => b.total - a.total);
              const rankOf = (sid) => {
                  const i = annualMap.findIndex(x => x.id === sid);
                  return i >= 0 ? (i + 1) : null;
@@ -18194,10 +18306,11 @@ html,body{font-family:'Cairo','Tajawal','Segoe UI',Tahoma,Arial,sans-serif;direc
 
              students.forEach(st => {
                  const t1Raw = calcTotal(st.id, '1', stage);
-                 const t2Raw = calcTotal(st.id, '2', stage);
-                 const t3Raw = calcTotal(st.id, '3', stage);
-                 const annualRaw = t1Raw + t2Raw + t3Raw;
-                 if (annualRaw === 0) return;
+                const t2Raw = calcTotal(st.id, '2', stage);
+                const t3Raw = calcTotal(st.id, '3', stage);
+                const annualRaw = t1Raw + t2Raw + t3Raw;
+                const hasAny = typeof hasAnyAnnualGrade === 'function' ? hasAnyAnnualGrade(st.id, stage) : annualRaw > 0;
+                if (!hasAny && annualRaw === 0) return;
 
                  const annualTotal = applyMercyGrade(annualRaw, annualMax);
                  const annualPct = annualMax > 0 ? annualTotal / annualMax * 100 : 0;
@@ -18216,24 +18329,28 @@ html,body{font-family:'Cairo','Tajawal','Segoe UI',Tahoma,Arial,sans-serif;direc
                  subjs.forEach(s => {
                      const sMax = getSubjMax(s.name, stage);
                      const sAnnualMax = [1, 2, 3].reduce((sum, t) => sum + (isSubjectActiveInTerm(s, t) ? sMax : 0), 0);
+                     const h1 = ['behavior', 'oral', 'attendance', 'written'].some(f => hasGradeVal(st.id, '1', s.name, f));
+                     const h2 = ['behavior', 'oral', 'attendance', 'written'].some(f => hasGradeVal(st.id, '2', s.name, f));
+                     const h3 = ['behavior', 'oral', 'attendance', 'written'].some(f => hasGradeVal(st.id, '3', s.name, f));
                      const s1 = calcSubjTotal(st.id, '1', s.name);
                      const s2 = calcSubjTotal(st.id, '2', s.name);
                      const s3 = calcSubjTotal(st.id, '3', s.name);
                      const sTotal = s1 + s2 + s3;
+                     const sHasAny = h1 || h2 || h3;
                      const sPct = sAnnualMax > 0 ? sTotal / sAnnualMax * 100 : 0;
                      const sPassed = sPct >= passPct;
-                     const sColor = sPassed ? '#155724' : (sTotal > 0 ? '#991b1b' : '#888');
-                     const sGradeTxt = sTotal > 0 ? getGradeText(sPct) : '—';
-                     if (sTotal > 0) { sPassed ? passedSubjCount++ : failedSubjCount++; subjStats.push({ name: s.name, pct: sPct }); }
-                     const cellHtml = (v, mx) => {
+                     const sColor = sPassed ? '#155724' : (sHasAny ? '#991b1b' : '#888');
+                     const sGradeTxt = sHasAny ? getGradeText(sPct) : '—';
+                     if (sHasAny) { sPassed ? passedSubjCount++ : failedSubjCount++; subjStats.push({ name: s.name, pct: sPct }); }
+                     const cellHtml = (v, mx, has) => {
                          const p = mx > 0 ? (v / mx * 100) : 0;
-                         const col = v === 0 ? '#888' : (p >= passPct ? '#155724' : '#991b1b');
-                         return `<td style="color:${col}">${v > 0 ? v : '—'}<br><span style="font-size:8.5px;color:#888;font-weight:400">/${mx}</span>${v > 0 ? `<br><span style="font-size:8px;color:${col};font-weight:700">${p.toFixed(0)}%</span>` : ''}</td>`;
+                         const col = !has ? '#888' : (p >= passPct ? '#155724' : '#991b1b');
+                         return `<td style="color:${col}">${has ? v : '—'}<br><span style="font-size:8.5px;color:#888;font-weight:400">/${mx}</span>${has ? `<br><span style="font-size:8px;color:${col};font-weight:700">${p.toFixed(0)}%</span>` : ''}</td>`;
                      };
                      rows += `<tr>
                          <td class="subject">${s.name}${s.teacher ? `<span class="teacher">👤 ${s.teacher}</span>` : ''}</td>
-                         ${cellHtml(s1, sMax)}${cellHtml(s2, sMax)}${cellHtml(s3, sMax)}
-                         <td class="total-cell">${sTotal > 0 ? sTotal : '—'}</td>
+                         ${cellHtml(s1, sMax, h1)}${cellHtml(s2, sMax, h2)}${cellHtml(s3, sMax, h3)}
+                         <td class="total-cell">${sHasAny ? sTotal : '—'}</td>
                          <td style="color:#666;font-weight:600">${sAnnualMax}</td>
                          <td class="pct-cell" style="color:${sColor}">${sAnnualMax > 0 ? sPct.toFixed(1) + '%' : '—'}</td>
                          <td style="font-size:9.5px;font-weight:700;color:${sColor}">${sGradeTxt}</td>
