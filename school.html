@@ -9732,8 +9732,8 @@ var qrcode=function(){function i(t,r){function a(t,r){g=function(t){for(var r=ne
                     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
                         <div class="fg" style="min-width:160px"><label>مزود الذكاء الاصطناعي</label>
                             <select id="ai-provider" onchange="onAIProviderChange()">
-                                <option value="lovable">Lovable AI (بدون مفتاح — موصى به)</option>
-                            <option value="gemini">Google Gemini (مفتاح خاص)</option>
+                                <option value="gemini" selected>🌟 Google Gemini AI (موصى به — مفتاح مجاني)</option>
+                                <option value="lovable">Lovable AI (عبر خادم Lovable)</option>
                                 <option value="claude">Claude (Anthropic)</option>
                             </select>
                         </div>
@@ -13154,7 +13154,7 @@ var qrcode=function(){function i(t,r){function a(t,r){g=function(t){for(var r=ne
         // ═══════════════════════════════════════════════════════════════
         //  استخراج الدرجات من صور كشوف OCR بالذكاء الاصطناعي (Gemini / Claude)
         // ═══════════════════════════════════════════════════════════════
-        function _getAIProvider() { return (document.getElementById('ai-provider') || { value: 'lovable' }).value; }
+        function _getAIProvider() { return (document.getElementById('ai-provider') || { value: 'gemini' }).value; }
         function _getAIKey() {
             const inp = document.getElementById('ai-api-key');
             if (inp && inp.value.trim()) return inp.value.trim();
@@ -13182,10 +13182,13 @@ var qrcode=function(){function i(t,r){function a(t,r){g=function(t){for(var r=ne
             const inp = document.getElementById('ai-api-key');
             if (inp) inp.value = localStorage.getItem('bsh_ai_' + p + '_key') || '';
             const hint = document.getElementById('ai-key-hint');
-            if (hint && p === 'lovable') { hint.innerHTML = '✨ يعمل عبر <b>Lovable AI</b> بدون أي مفتاح — لا حاجة لحساب Google أو Anthropic.'; return; }
+            if (hint && p === 'lovable') {
+                hint.innerHTML = '✨ يعمل عبر خادم <b>Lovable AI</b> (إن كان متاحاً بالمشروع).';
+                return;
+            }
             if (hint) hint.innerHTML = p === 'gemini'
-                ? '🔑 احصل على مفتاح <b>مجاني</b> من <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:#15803d;font-weight:700">Google AI Studio</a> — يُحفظ على جهازك فقط ولا يُرسَل لأي جهة أخرى.'
-                : '🔑 احصل على مفتاح من <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" style="color:#15803d;font-weight:700">Anthropic Console</a> — يُحفظ على جهازك فقط.';
+                ? '🔑 <b>Google Gemini (مجاني وسريع جداً):</b> احصل على مفتاحك مجاناً في ثوانٍ من <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:#15803d;font-weight:900;text-decoration:underline">Google AI Studio (اضغط هنا)</a> — اضغط Create API Key والصقه هنا واحفظه.'
+                : '🔑 احصل على مفتاح من <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" style="color:#15803d;font-weight:700">Anthropic Console</a>.';
         }
 
         // ── شحذ خفيف (Unsharp Mask) لزيادة وضوح حواف الأرقام المكتوبة بخط اليد ──
@@ -13357,7 +13360,7 @@ var qrcode=function(){function i(t,r){function a(t,r){g=function(t){for(var r=ne
 
         // ── Lovable AI (بدون مفتاح): يمر عبر خادم المشروع ──
         const LOVABLE_AI_BASE = 'https://project--302cdddc-4e95-4469-9ed3-ffad335ba7ca-dev.lovable.app';
-        const LOVABLE_AI_ENDPOINT = ((location.protocol.startsWith('http') && !location.hostname.startsWith('id-preview--')) ? location.origin : LOVABLE_AI_BASE) + '/api/public/vision';
+        const LOVABLE_AI_ENDPOINT = (location.hostname.endsWith('lovable.app') ? location.origin : LOVABLE_AI_BASE) + '/api/public/vision';
         async function _callLovableVision(prompt, images) {
             const resp = await fetch(LOVABLE_AI_ENDPOINT, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -13365,7 +13368,12 @@ var qrcode=function(){function i(t,r){function a(t,r){g=function(t){for(var r=ne
             });
             let data = {};
             try { data = await resp.json(); } catch (e) { }
-            if (!resp.ok || data.error) throw new Error(data.error || ('خطأ في الخدمة (' + resp.status + ')'));
+            if (!resp.ok || data.error) {
+                if (resp.status === 405 || resp.status === 402 || resp.status === 429) {
+                    throw new Error('خدمة Lovable غير متاحة حالياً أو انتهت الكوتا (' + resp.status + '). يرجى اختيار "Google Gemini AI" واستخدام مفتاحك المجاني.');
+                }
+                throw new Error(data.error || ('خطأ في الخدمة (' + resp.status + ')'));
+            }
             return data.text || '';
         }
         async function _callVision(provider, key, prompt, images) {
@@ -14145,7 +14153,7 @@ ${students.join(' | ')}
         // =========================================================
         // 📷 استيراد الغياب من صور كشوف OCR بالذكاء الاصطناعي
         // =========================================================
-        function _getAbsAIProvider() { return (document.getElementById('abs-ai-provider') || { value: 'lovable' }).value; }
+        function _getAbsAIProvider() { return (document.getElementById('abs-ai-provider') || { value: 'gemini' }).value; }
         function _getAbsAIKey() {
             const inp = document.getElementById('abs-ai-api-key');
             if (inp && inp.value.trim()) return inp.value.trim();
