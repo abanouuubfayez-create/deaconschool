@@ -14821,7 +14821,8 @@ ${students.join(' | ')}
                     let rased = 0;
                     students.forEach(st => {
                         const g = DB.grades[st.id + '_t' + term + '_' + subj.name];
-                        const has = g && ((subj.behavior && (g.behavior || 0) > 0) || (subj.oral && (g.oral || 0) > 0) || (subj.attendance && (g.attendance || 0) > 0) || (subj.written && (g.written || 0) > 0));
+                        const _set2 = v => v !== undefined && v !== null && v !== '';
+                        const has = g && ((subj.behavior && _set2(g.behavior)) || (subj.oral && _set2(g.oral)) || (subj.attendance && _set2(g.attendance)) || (subj.written && _set2(g.written)));
                         if (has) rased++;
                     });
                     if (rased < students.length) allDone = false;
