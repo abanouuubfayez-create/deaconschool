@@ -15027,8 +15027,9 @@ ${students.join(' | ')}
       <div class="mgc-fields">`;
                 const _autoAttM = !!(DB.settings && DB.settings.autoAttendanceEnabled);
                 flds.forEach(f => {
-                    const val = getGrade(st.id, term, s.name, f) || '';
-                    const cls = val > s[f] ? ' over' : val > 0 ? ' filled' : '';
+                    const raw = getGradeRaw(st.id, term, s.name, f);
+                    const val = raw === undefined ? '' : raw;
+                    const cls = raw !== undefined && raw > s[f] ? ' over' : raw !== undefined ? ' filled' : '';
                     if (_autoAttM && f === 'attendance') {
                         html += `<div class="mgc-field">
         <label>${fmap[f]} 🔒</label>
