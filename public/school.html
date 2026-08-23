@@ -13527,24 +13527,28 @@ var qrcode=function(){function i(t,r){function a(t,r){g=function(t){for(var r=ne
             });
             return { rows: out, conflicts };
         }
-        // قراءة واحدة للصفحة مع إعادة محاولة ودعم التبديل التلقائي عند انتهاء كوتا Lovable
+        // قراءة واحدة للصفحة مع تسجيل دقيق لكافة التفاصيل في الـ Console
         async function _readGradePage(provider, key, prompt, img) {
             let lastErr = null;
             for (let attempt = 0; attempt < 2; attempt++) {
                 try {
+                    console.log(`📡 [قراءة الصفحة - المحاولة ${attempt + 1}] المزود: ${provider}`);
                     const text = await _callVision(provider, key, prompt, [img]);
+                    console.log('📄 AI Raw Text Result:', text);
+
                     if (!text || !text.trim()) {
-                        if (provider === 'lovable') {
-                            throw new Error('انتهى رصيد كوتا Lovable — يرجى التبديل إلى Google Gemini (مفتاح مجاني مدى الحياة).');
-                        }
-                        throw new Error('الخادم أرجع رداً فارغاً — تأكد من وضوح الصورة');
+                        throw new Error('الخادم أرجع رداً فارغاً — تحقق من الـ Console');
                     }
+
                     const r = _parseAIRows(text);
+                    console.log('📊 استخراج الطلاب المحللين:', r ? r.length : 0, r);
+
                     if (r && r.length) return r;
-                    lastErr = new Error('لم يتم استخراج بيانات واضحة من هذه الصفحة');
+                    lastErr = new Error('تم استلام رد ولكن لم يتم العثور على جداول درجات. الرد: ' + text.slice(0, 100) + '...');
                 } catch (e) {
+                    console.error(`❌ خطأ أثناء قراءة الصفحة (المحاولة ${attempt + 1}):`, e);
                     lastErr = e;
-                    await new Promise(r => setTimeout(r, 1000));
+                    if (attempt === 0) await new Promise(r => setTimeout(r, 1000));
                 }
             }
             throw lastErr || new Error('فشل تحليل الصفحة');

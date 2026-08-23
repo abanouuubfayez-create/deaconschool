@@ -56,14 +56,18 @@ export const Route = createFileRoute("/api/public/vision")({
           }
         }
 
+        console.log(`[Vision API] Received request with ${parsed.images.length} images. Prompt length: ${parsed.prompt.length}`);
+
         const apiKey = process.env["LOVABLE_API_KEY"];
         if (!apiKey) {
-          return json({ error: "خدمة الذكاء الاصطناعي غير مهيأة على الخادم." }, 500);
+          console.error("[Vision API] LOVABLE_API_KEY is missing!");
+          return json({ error: "خدمة الذكاء الاصطناعي غير مهيأة على الخادم (LOVABLE_API_KEY مفقود)." }, 500);
         }
 
         const gateway = createLovableAiGatewayProvider(apiKey, getLovableAiGatewayRunId(request));
 
         try {
+          console.log(`[Vision API] Calling Lovable AI Gateway with model ${MODEL}...`);
           const result = await generateText({
             model: gateway(MODEL),
             temperature: 0,
@@ -82,20 +86,31 @@ export const Route = createFileRoute("/api/public/vision")({
           });
 
           const text = result.text || "";
-          return json({ text });
+          console.log(`[Vision API] Success! Text length: ${text.length}, FinishReason: ${result.finishReason}, Warnings: ${JSON.stringify(result.warnings || [])}`);
+          if (text.length < 50) {
+            console.log(`[Vision API] Response snippet: "${text}"`);
+          }
+
+          return json({
+            text,
+            finishReason: result.finishReason,
+            usage: result.usage,
+            warnings: result.warnings,
+          });
         } catch (error) {
+          console.error("[Vision API Error]:", error);
           const status = APICallError.isInstance(error) ? error.statusCode : undefined;
+          const errMsg = error instanceof Error ? error.message : String(error);
           if (status === 429) {
-            return json({ error: "الخدمة مشغولة حاليًا — انتظر قليلًا ثم أعد المحاولة." }, 429);
+            return json({ error: "الخدمة مشغولة حاليًا (429) — انتظر قليلًا ثم أعد المحاولة.", details: errMsg }, 429);
           }
           if (status === 402) {
-            return json({ error: "انتهى رصيد الذكاء الاصطناعي — يلزم شحن الرصيد من Lovable." }, 402);
+            return json({ error: "انتهى رصيد الذكاء الاصطناعي (402) — يلزم شحن الرصيد من Lovable.", details: errMsg }, 402);
           }
           if (status === 403) {
-            return json({ error: "الذكاء الاصطناعي معطّل لهذا المشروع." }, 403);
+            return json({ error: "الذكاء الاصطناعي معطّل لهذا المشروع (403).", details: errMsg }, 403);
           }
-          const message = error instanceof Error ? error.message : "خطأ غير معروف";
-          return json({ error: "تعذّر تحليل الصور: " + message }, 502);
+          return json({ error: "تعذّر تحليل الصور: " + errMsg, details: errMsg }, 502);
         }
       },
     },
