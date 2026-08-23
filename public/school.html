@@ -14891,17 +14891,25 @@ ${students.join(' | ')}
         }
         let _gradeAutoSaveTimer = null;
         function handleGradeInput(el) {
-            if (!IS_EDIT_MODE) { el.value = getGrade(el.dataset.sid, el.dataset.term, el.dataset.subj, el.dataset.field) || ''; return; }
+            if (!IS_EDIT_MODE) { const r0 = getGradeRaw(el.dataset.sid, el.dataset.term, el.dataset.subj, el.dataset.field); el.value = r0 === undefined ? '' : r0; return; }
             const sid = el.dataset.sid, term = el.dataset.term, subj = el.dataset.subj, field = el.dataset.field, max = +el.dataset.max;
-            let val = parseFloat(el.value) || 0;
-            if (val < 0) { val = 0; el.value = 0; }
-            if (val > max) {
-                val = max;
-                el.value = max;
-                showToast('⚠️ الحد الأقصى لهذه المادة هو ' + max);
+            const isEmpty = String(el.value).trim() === '';
+            if (isEmpty) {
+                const k = sid + '_t' + term + '_' + subj;
+                if (DB.grades && DB.grades[k]) delete DB.grades[k][field];
+                el.className = 'gi';
+            } else {
+                let val = parseFloat(el.value);
+                if (!isFinite(val)) val = 0;
+                if (val < 0) { val = 0; el.value = 0; }
+                if (val > max) {
+                    val = max;
+                    el.value = max;
+                    showToast('⚠️ الحد الأقصى لهذه المادة هو ' + max);
+                }
+                setGrade(sid, term, subj, field, val);
+                el.className = 'gi filled';
             }
-            setGrade(sid, term, subj, field, val);
-            el.className = 'gi' + (val > 0 ? ' filled' : '');
             const stage = (document.getElementById('exam-stage-sel') || { value: '' }).value;
             const rawTotal = calcTotal(sid, term, stage), termMax = getTermMax(stage, term);
             const total = applyMercyGrade(rawTotal, termMax);
