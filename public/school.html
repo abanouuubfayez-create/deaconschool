@@ -14589,7 +14589,7 @@ ${students.join(' | ')}
             counters = counters || { added: 0, overwritten: 0, skipped: 0 };
             const k = sid + '_t' + term + '_' + subj;
             const cur = DB.grades && DB.grades[k] ? DB.grades[k][field] : undefined;
-            const hasValue = cur !== undefined && cur !== null && cur !== '' && (+cur > 0);
+            const hasValue = cur !== undefined && cur !== null && cur !== '';
             if (hasValue && !allowOverwrite) { counters.skipped++; return false; }
             if (hasValue && allowOverwrite) counters.overwritten++; else counters.added++;
             if (!DB.grades) DB.grades = {};
