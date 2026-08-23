@@ -15033,7 +15033,7 @@ ${students.join(' | ')}
                     if (_autoAttM && f === 'attendance') {
                         html += `<div class="mgc-field">
         <label>${fmap[f]} 🔒</label>
-        <input type="number" class="auto-att${val > 0 ? ' filled' : ''}" readonly tabindex="-1" value="${val}" placeholder="—"
+        <input type="number" class="auto-att${raw !== undefined ? ' filled' : ''}" readonly tabindex="-1" value="${val}" placeholder="—"
           title="تُحسب تلقائيًا من سجل الغياب"
           style="background:#eef6ee;color:#15803d;font-weight:800;cursor:not-allowed">
         <div class="max-hint">من ${s[f]} (تلقائي)</div>
