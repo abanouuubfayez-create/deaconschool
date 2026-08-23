@@ -14922,7 +14922,7 @@ ${students.join(' | ')}
             // ✅ تحديث مجموع المادة لحظياً
             const sSafeKey = subj.replace(/\s/g,'_');
             const sc = document.getElementById('sc-' + sid + '-' + term + '-' + sSafeKey);
-            if (sc) { const sTotal=calcSubjTotal(sid,term,subj),sMax=getSubjMax(subj,stage),sPct=sMax>0?sTotal/sMax*100:0; sc.innerHTML=`<span style="font-size:13px;font-weight:900;color:${sTotal>0?getGradeColor(sPct):'var(--muted)'}">${sTotal||'—'}</span><span style="font-size:10px;color:var(--muted);font-weight:400">/${sMax}</span>`; }
+            if (sc) { const sTotal=calcSubjTotal(sid,term,subj),sMax=getSubjMax(subj,stage),sPct=sMax>0?sTotal/sMax*100:0,sHas=['behavior','oral','attendance','written'].some(f=>hasGradeVal(sid,term,subj,f)); sc.innerHTML=`<span style="font-size:13px;font-weight:900;color:${sHas?getGradeColor(sPct):'var(--muted)'}">${sHas?sTotal:'—'}</span><span style="font-size:10px;color:var(--muted);font-weight:400">/${sMax}</span>`; }
             // ✅ حفظ تلقائي مشترك — timer واحد لكل الخانات
             clearTimeout(_gradeAutoSaveTimer);
             _gradeAutoSaveTimer = setTimeout(() => saveDB(), 600);
