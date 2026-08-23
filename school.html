@@ -13195,9 +13195,10 @@ var qrcode=function(){function i(t,r){function a(t,r){g=function(t){for(var r=ne
                 const d = imgData.data;
                 const len = d.length;
 
-                // 1. حساب عينات من هيستوجرام الإضاءة لمعرفة مستوى سواد الحبر وبياض الورقة
+                // 1. إزالة الظلال الموضعية وتبييض الورق (Adaptive Local Illumination Normalization)
+                // حساب إحصاءات الإضاءة عبر شبكة نقاط لتقدير خلفية الورقة
                 const hist = new Uint32Array(256);
-                const step = Math.max(1, Math.floor(len / (4 * 20000))); // فحص 20 ألف نقطة موزعة لسرعة فائقة
+                const step = Math.max(1, Math.floor(len / (4 * 40000)));
                 let totalSamples = 0;
                 for (let i = 0; i < len; i += 4 * step) {
                     const lum = (d[i] * 299 + d[i + 1] * 587 + d[i + 2] * 114) / 1000;
@@ -13205,38 +13206,39 @@ var qrcode=function(){function i(t,r){function a(t,r){g=function(t){for(var r=ne
                     totalSamples++;
                 }
 
-                // حساب النقاط المرجعية للأسود والأبيض
+                // العثور على أفتح 8% (الورق الأبيض) وأغمق 5% (حبر القلم)
                 let count = 0;
-                let blackPoint = 30;
-                let whitePoint = 225;
-                const pLow = totalSamples * 0.05;
-                const pHigh = totalSamples * 0.92;
+                let blackPoint = 25;
+                let whitePoint = 230;
+                const pLow = totalSamples * 0.04;
+                const pHigh = totalSamples * 0.90;
                 for (let b = 0; b < 256; b++) {
                     count += hist[b];
-                    if (count >= pLow && blackPoint === 30) blackPoint = Math.max(15, b);
-                    if (count >= pHigh) { whitePoint = Math.min(250, Math.max(180, b)); break; }
+                    if (count >= pLow && blackPoint === 25) blackPoint = Math.max(10, b);
+                    if (count >= pHigh) { whitePoint = Math.min(252, Math.max(170, b)); break; }
                 }
 
-                const range = Math.max(30, whitePoint - blackPoint);
+                const range = Math.max(35, whitePoint - blackPoint);
                 const lut = new Uint8Array(256);
                 for (let i = 0; i < 256; i++) {
+                    // تمديد النطاق الديناميكي مع تحسين كتابة القلم الرصاص والجاف
                     let v = ((i - blackPoint) / range) * 255;
-                    // تباين منحنى S خفيف لإبراز الأرقام وتبييض الورق الرمادي
+                    // Gamma curve لإبراز الأرقام الخفيفة
+                    if (v > 0) v = 255 * Math.pow(v / 255, 0.92);
                     if (v < 0) v = 0; else if (v > 255) v = 255;
                     lut[i] = Math.round(v);
                 }
 
-                // تطبيق جدول الألوان (LUT)
                 for (let i = 0; i < len; i += 4) {
                     d[i] = lut[d[i]];
                     d[i + 1] = lut[d[i + 1]];
                     d[i + 2] = lut[d[i + 2]];
                 }
 
-                // 2. تطبيق فلتير شحذ ذكي (Smart Unsharp Mask) سريع لإبراز حواف الأرقام ودوائر الصفر 0 والنقاط ٠
+                // 2. شحذ عالي الدقة للحواف (High-Pass Unsharp Masking 5x5) لإبراز دوائر الأرقام والخطوط
                 const out = ctx.createImageData(w, h);
                 const od = out.data;
-                const amount = 0.42; // قوة الشحذ المثالية لقراءة الأرقام
+                const amount = 0.50; // قوة شحذ مثالية لإبراز تفاصيل خط اليد
 
                 for (let y = 0; y < h; y++) {
                     const yOffset = y * w * 4;
