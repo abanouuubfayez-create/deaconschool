@@ -13524,12 +13524,15 @@ var qrcode=function(){function i(t,r){function a(t,r){g=function(t){for(var r=ne
             for (let attempt = 0; attempt < 2; attempt++) {
                 try {
                     const text = await _callVision(provider, key, prompt, [img]);
+                    if (!text || !text.trim()) {
+                        throw new Error('الخادم أرجع رداً فارغاً — تأكد من وضوح الصورة');
+                    }
                     const r = _parseAIRows(text);
                     if (r && r.length) return r;
-                    lastErr = new Error('لم تُقرأ بيانات من هذه الصفحة');
+                    lastErr = new Error('لم يتم العثور على جداول درجات واضحة بالصورة');
                 } catch (e) {
                     lastErr = e;
-                    await new Promise(r => setTimeout(r, 1200));
+                    await new Promise(r => setTimeout(r, 1000));
                 }
             }
             throw lastErr || new Error('فشل تحليل الصفحة');
