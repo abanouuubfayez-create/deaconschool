@@ -13176,6 +13176,15 @@ var qrcode=function(){function i(t,r){function a(t,r){g=function(t){for(var r=ne
             if (box) box.style.display = show ? '' : 'none';
             if (btn) btn.style.display = show ? '' : 'none';
         }
+        
+        function switchToGeminiAI() {
+            const sel = document.getElementById('ai-provider');
+            if (sel) { sel.value = 'gemini'; onAIProviderChange(); }
+            const inp = document.getElementById('ai-api-key');
+            if (inp) { inp.focus(); }
+            showToast('🌟 تم التبديل إلى Google Gemini — الصق مفتاحك المجاني للمتابعة');
+        }
+
         function onAIProviderChange() {
             const p = _getAIProvider();
             _toggleKeyBox('ai-api-key', p);
@@ -13518,18 +13527,21 @@ var qrcode=function(){function i(t,r){function a(t,r){g=function(t){for(var r=ne
             });
             return { rows: out, conflicts };
         }
-        // قراءة واحدة للصفحة مع إعادة محاولة
+        // قراءة واحدة للصفحة مع إعادة محاولة ودعم التبديل التلقائي عند انتهاء كوتا Lovable
         async function _readGradePage(provider, key, prompt, img) {
             let lastErr = null;
             for (let attempt = 0; attempt < 2; attempt++) {
                 try {
                     const text = await _callVision(provider, key, prompt, [img]);
                     if (!text || !text.trim()) {
+                        if (provider === 'lovable') {
+                            throw new Error('انتهى رصيد كوتا Lovable — يرجى التبديل إلى Google Gemini (مفتاح مجاني مدى الحياة).');
+                        }
                         throw new Error('الخادم أرجع رداً فارغاً — تأكد من وضوح الصورة');
                     }
                     const r = _parseAIRows(text);
                     if (r && r.length) return r;
-                    lastErr = new Error('لم يتم العثور على جداول درجات واضحة بالصورة');
+                    lastErr = new Error('لم يتم استخراج بيانات واضحة من هذه الصفحة');
                 } catch (e) {
                     lastErr = e;
                     await new Promise(r => setTimeout(r, 1000));
