@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>مدرسة البابا شنودة - نظام الإدارة v37</title>
+    <title>مدرسة البابا شنودة - نظام الإدارة v38</title>
 
     <!-- PWA Meta Tags -->
     <meta name="application-name" content="مدرسة البابا شنودة">
@@ -14985,7 +14985,7 @@ ${students.join(' | ')}
             const rowBg = isFirst ? 'background:linear-gradient(135deg,#fffde7,#fef9c3)' : isFailed ? 'background:linear-gradient(135deg,#fff5f5,#fee2e2)' : isRepeater ? 'background:linear-gradient(135deg,#fef3c7,#fde68a)' : '';
                 let row = `<tr style="${rowBg}"><td class="sticky-col" style="${isFirst ? 'background:linear-gradient(135deg,#fffde7,#fef9c3);' : isFailed ? 'background:linear-gradient(135deg,#fff5f5,#fee2e2);' : ''}">${isFirst ? '🥇 ' : isFailed ? '❌ ' : ''}${(st.status || '').indexOf('راسب') !== -1 ? '🔄 ' : ''}${st.name}</td>`;
                 const _autoAtt = !!(DB.settings && DB.settings.autoAttendanceEnabled);
-                subjs.forEach(s => { const flds=['behavior','oral','attendance','written'].filter(f=>s[f]>0); flds.forEach(f => { const raw=getGradeRaw(st.id,term,s.name,f); const has=raw!==undefined; const val=has?raw:''; const cls=has&&raw>s[f]?' over':has?' filled':''; if(_autoAtt && f==='attendance'){ row += `<td style="border-left:1px solid rgba(212,192,138,.2)"><input type="number" class="gi auto-att${has?' filled':''}" readonly tabindex="-1" value="${val}" placeholder="—" title="تُحسب تلقائيًا من سجل الغياب — معطّلة للتعديل اليدوي" data-sid="${st.id}" data-term="${term}" data-subj="${s.name}" data-field="${f}" data-max="${s[f]}" style="background:#eef6ee;color:#15803d;font-weight:800;cursor:not-allowed"></td>`; } else { row += `<td style="border-left:1px solid rgba(212,192,138,.2)"><input type="number" class="gi${cls}" min="0" max="${s[f]}" value="${val}" placeholder="—" data-sid="${st.id}" data-term="${term}" data-subj="${s.name}" data-field="${f}" data-max="${s[f]}" oninput="handleGradeInput(this)" onchange="handleGradeInput(this)"></td>`; } }); if(flds.length){ const sTotal=calcSubjTotal(st.id,term,s.name),sMax=getSubjMax(s.name,stage),sPct=sMax>0?sTotal/sMax*100:0,sSafeKey=s.name.replace(/\s/g,'_'),sHas=flds.some(f=>hasGradeVal(st.id,term,s.name,f)); row += `<td id="sc-${st.id}-${term}-${sSafeKey}" style="border-left:2px solid rgba(255,215,0,.35);background:rgba(255,215,0,.07);text-align:center;white-space:nowrap;padding:4px 10px;min-width:60px"><span style="font-size:13px;font-weight:900;color:${sHas?getGradeColor(sPct):'var(--muted)'}">${sHas?sTotal:'—'}</span><span style="font-size:10px;color:var(--muted);font-weight:400">/${sMax}</span></td>`; } });
+                subjs.forEach(s => { const flds=['behavior','oral','attendance','written'].filter(f=>s[f]>0); flds.forEach(f => { const raw=getGradeRaw(st.id,term,s.name,f); const has=raw!==undefined; const val=has?raw:''; const cls=has&&raw>s[f]?' over':has?' filled':''; if(_autoAtt && f==='attendance'){ row += `<td style="border-left:1px solid rgba(212,192,138,.2)"><input type="number" class="gi auto-att${has?' filled':''}" readonly tabindex="-1" value="${val}" placeholder="0" title="تُحسب تلقائيًا من سجل الغياب — معطّلة للتعديل اليدوي" data-sid="${st.id}" data-term="${term}" data-subj="${s.name}" data-field="${f}" data-max="${s[f]}" style="background:#eef6ee;color:#15803d;font-weight:800;cursor:not-allowed"></td>`; } else { row += `<td style="border-left:1px solid rgba(212,192,138,.2)"><input type="number" class="gi${cls}" min="0" max="${s[f]}" value="${val}" placeholder="0" data-sid="${st.id}" data-term="${term}" data-subj="${s.name}" data-field="${f}" data-max="${s[f]}" oninput="handleGradeInput(this)" onchange="handleGradeInput(this)"></td>`; } }); if(flds.length){ const sTotal=calcSubjTotal(st.id,term,s.name),sMax=getSubjMax(s.name,stage),sPct=sMax>0?sTotal/sMax*100:0,sSafeKey=s.name.replace(/\s/g,'_'),sHas=flds.some(f=>hasGradeVal(st.id,term,s.name,f)); row += `<td id="sc-${st.id}-${term}-${sSafeKey}" style="border-left:2px solid rgba(255,215,0,.35);background:rgba(255,215,0,.07);text-align:center;white-space:nowrap;padding:4px 10px;min-width:60px"><span style="font-size:13px;font-weight:900;color:${sHas?getGradeColor(sPct):'var(--muted)'}">${sTotal}</span><span style="font-size:10px;color:var(--muted);font-weight:400">/${sMax}</span></td>`; } });
                 row += `<td class="grade-total-cell" id="tc-${st.id}-${term}">${total}<span style="font-size:10px;color:var(--muted);font-weight:400">/${max}</span>${mercyInfo ? '<span style="font-size:9px;color:#d97706;font-weight:700" title="درجة رأفة: +' + mercyInfo.added + '"> \u{1F3AF}+' + mercyInfo.added + '</span>' : ''}</td><td id="tp-${st.id}-${term}"><span style="font-size:13px;font-weight:900;color:${getGradeColor(pct)}">${pct.toFixed(1)}%</span></td><td id="tg-${st.id}-${term}"><span class="badge ${getGradeClass(pct)}">${getGradeText(pct)}</span></td>`;
                 const hasN = spGetNotesCount(st.id) > 0;
                 row += `<td style="white-space:nowrap"><button class="btn btn-sm allow-ro" style="background:${hasN ? '#e8f0ff' : 'var(--bg)'};color:${hasN ? '#1e40af' : 'var(--muted)'};border:1.5px solid ${hasN ? '#93c5fd' : 'var(--border)'};font-size:12px" title="${hasN ? 'يوجد ملاحظات — انقر للعرض' : 'أضف ملاحظة'}" onclick="openSPNotes('${st.id}')">${hasN ? '📝' : '📋'}</button> <button class="btn btn-danger btn-sm" title="حذف درجات هذا الطالب في هذا الترم" onclick="deleteStudentTermGrades('${st.id}','${term}','${stage}')">🗑️</button></td></tr>`;
@@ -15025,7 +15025,7 @@ ${students.join(' | ')}
             // ✅ تحديث مجموع المادة لحظياً
             const sSafeKey = subj.replace(/\s/g,'_');
             const sc = document.getElementById('sc-' + sid + '-' + term + '-' + sSafeKey);
-            if (sc) { const sTotal=calcSubjTotal(sid,term,subj),sMax=getSubjMax(subj,stage),sPct=sMax>0?sTotal/sMax*100:0,sHas=['behavior','oral','attendance','written'].some(f=>hasGradeVal(sid,term,subj,f)); sc.innerHTML=`<span style="font-size:13px;font-weight:900;color:${sHas?getGradeColor(sPct):'var(--muted)'}">${sHas?sTotal:'—'}</span><span style="font-size:10px;color:var(--muted);font-weight:400">/${sMax}</span>`; }
+            if (sc) { const sTotal=calcSubjTotal(sid,term,subj),sMax=getSubjMax(subj,stage),sPct=sMax>0?sTotal/sMax*100:0,sHas=['behavior','oral','attendance','written'].some(f=>hasGradeVal(sid,term,subj,f)); sc.innerHTML=`<span style="font-size:13px;font-weight:900;color:${sHas?getGradeColor(sPct):'var(--muted)'}">${sTotal}</span><span style="font-size:10px;color:var(--muted);font-weight:400">/${sMax}</span>`; }
             // ✅ حفظ تلقائي مشترك — timer واحد لكل الخانات
             clearTimeout(_gradeAutoSaveTimer);
             _gradeAutoSaveTimer = setTimeout(() => saveDB(), 600);
@@ -15136,7 +15136,7 @@ ${students.join(' | ')}
                     if (_autoAttM && f === 'attendance') {
                         html += `<div class="mgc-field">
         <label>${fmap[f]} 🔒</label>
-        <input type="number" class="auto-att${raw !== undefined ? ' filled' : ''}" readonly tabindex="-1" value="${val}" placeholder="—"
+        <input type="number" class="auto-att${raw !== undefined ? ' filled' : ''}" readonly tabindex="-1" value="${val}" placeholder="0"
           title="تُحسب تلقائيًا من سجل الغياب"
           style="background:#eef6ee;color:#15803d;font-weight:800;cursor:not-allowed">
         <div class="max-hint">من ${s[f]} (تلقائي)</div>
@@ -15144,7 +15144,7 @@ ${students.join(' | ')}
                     } else {
                         html += `<div class="mgc-field">
         <label>${fmap[f]}</label>
-        <input type="number" class="${cls}" inputmode="numeric" min="0" max="${s[f]}" value="${val}" placeholder="—"
+        <input type="number" class="${cls}" inputmode="numeric" min="0" max="${s[f]}" value="${val}" placeholder="0"
           data-sid="${st.id}" data-term="${term}" data-subj="${s.name}" data-field="${f}" data-max="${s[f]}"
           oninput="handleGradeInput(this);mgcUpdateTotal()"
           onchange="handleGradeInput(this);mgcUpdateTotal()">
@@ -24553,34 +24553,41 @@ ${_fcFrame()}
             const ml = document.querySelector('link[rel="manifest"]');
             if (ml) ml.href = url;
         })();
-        // ══ INLINE SERVICE WORKER (no sw.js file needed) ══
+        // ══ INLINE SERVICE WORKER (Network-First + Auto Cache Invalidation) ══
+        // مسح الكاشات القديمة فوراً لضمان تحميل أحدث نسخة من السيرفر
+        if ('caches' in window) {
+            caches.keys().then(ks => ks.forEach(k => { if (k !== 'school-v38') caches.delete(k); }));
+        }
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 const swCode = `
-const CACHE='school-v1';
-const SHELL=[location.href];
+const CACHE='school-v38';
 self.addEventListener('install',e=>{
-  e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL).catch(()=>{})).then(()=>self.skipWaiting()));
+  self.skipWaiting();
 });
 self.addEventListener('activate',e=>{
   e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
 });
 self.addEventListener('fetch',e=>{
   if(e.request.method!=='GET')return;
-  e.respondWith(caches.match(e.request).then(cached=>{
-    const net=fetch(e.request).then(r=>{
-      if(r&&r.status===200&&r.type!=='opaque'){const cl=r.clone();caches.open(CACHE).then(c=>c.put(e.request,cl));}
+  e.respondWith(
+    fetch(e.request).then(r=>{
+      if(r&&r.status===200&&r.type!=='opaque'){
+        const cl=r.clone();caches.open(CACHE).then(c=>c.put(e.request,cl));
+      }
       return r;
-    }).catch(()=>{});
-    return cached||net;
-  }));
+    }).catch(()=>caches.match(e.request))
+  );
 });
 `;
                 try {
                     const blob = new Blob([swCode], { type: 'application/javascript' });
                     const url = URL.createObjectURL(blob);
                     navigator.serviceWorker.register(url, { scope: './' })
-                        .then(r => console.log('✅ SW inline registered'))
+                        .then(r => {
+                            if (r.update) r.update();
+                            console.log('✅ SW v38 registered & updated');
+                        })
                         .catch(e => console.warn('SW fallback:', e));
                 } catch (e) { console.warn('SW blob failed:', e); }
             });
