@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { APICallError, streamText } from "ai";
+import { APICallError, generateText } from "ai";
 import { z } from "zod";
 
 import { createLovableAiGatewayProvider, getLovableAiGatewayRunId } from "@/lib/ai-gateway.server";
 
-const MODEL = "google/gemini-3.7-flash";
+const MODEL = "google/gemini-2.5-flash";
 const MAX_IMAGES = 10;
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 
@@ -64,7 +64,7 @@ export const Route = createFileRoute("/api/public/vision")({
         const gateway = createLovableAiGatewayProvider(apiKey, getLovableAiGatewayRunId(request));
 
         try {
-          const result = streamText({
+          const result = await generateText({
             model: gateway(MODEL),
             temperature: 0,
             messages: [
@@ -81,7 +81,7 @@ export const Route = createFileRoute("/api/public/vision")({
             ],
           });
 
-          const text = await result.text;
+          const text = result.text || "";
           return json({ text });
         } catch (error) {
           const status = APICallError.isInstance(error) ? error.statusCode : undefined;
