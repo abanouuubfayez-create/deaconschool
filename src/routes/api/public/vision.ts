@@ -68,28 +68,48 @@ export const Route = createFileRoute("/api/public/vision")({
 
         try {
           console.log(`[Vision API] Calling Lovable AI Gateway with model ${MODEL}...`);
-          const result = await generateText({
-            model: gateway(MODEL),
-            temperature: 0,
-            messages: [
-              {
-                role: "user",
-                content: [
-                  { type: "text" as const, text: parsed.prompt },
-                  ...parsed.images.map((image) => ({
-                    type: "image" as const,
-                    image: `data:${image.mtype};base64,${image.b64}`,
-                  })),
-                ],
-              },
-            ],
-          });
+          let result;
+          try {
+            result = await generateText({
+              model: gateway(MODEL),
+              temperature: 0,
+              maxTokens: 8192,
+              messages: [
+                {
+                  role: "user",
+                  content: [
+                    { type: "text" as const, text: parsed.prompt },
+                    ...parsed.images.map((image) => ({
+                      type: "image" as const,
+                      image: `data:${image.mtype || "image/jpeg"};base64,${image.b64}`,
+                    })),
+                  ],
+                },
+              ],
+            });
+          } catch (modelErr) {
+            console.warn(`[Vision API] Primary model ${MODEL} failed, falling back to openai/gpt-4o-mini:`, modelErr);
+            result = await generateText({
+              model: gateway("openai/gpt-4o-mini"),
+              temperature: 0,
+              maxTokens: 8192,
+              messages: [
+                {
+                  role: "user",
+                  content: [
+                    { type: "text" as const, text: parsed.prompt },
+                    ...parsed.images.map((image) => ({
+                      type: "image" as const,
+                      image: `data:${image.mtype || "image/jpeg"};base64,${image.b64}`,
+                    })),
+                  ],
+                },
+              ],
+            });
+          }
 
           const text = result.text || "";
-          console.log(`[Vision API] Success! Text length: ${text.length}, FinishReason: ${result.finishReason}, Warnings: ${JSON.stringify(result.warnings || [])}`);
-          if (text.length < 50) {
-            console.log(`[Vision API] Response snippet: "${text}"`);
-          }
+          console.log(`[Vision API] Success! Text length: ${text.length}, FinishReason: ${result.finishReason}`);
 
           return json({
             text,
