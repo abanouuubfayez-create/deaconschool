@@ -14537,7 +14537,8 @@ ${students.join(' | ')}
                     let rased = 0;
                     students.forEach(st => {
                         const g = DB.grades[st.id + '_t' + term + '_' + subj.name];
-                        const hasData = g && ((subj.behavior && (g.behavior || 0) > 0) || (subj.oral && (g.oral || 0) > 0) || (subj.attendance && (g.attendance || 0) > 0) || (subj.written && (g.written || 0) > 0));
+                        const _set = v => v !== undefined && v !== null && v !== '';
+                        const hasData = g && ((subj.behavior && _set(g.behavior)) || (subj.oral && _set(g.oral)) || (subj.attendance && _set(g.attendance)) || (subj.written && _set(g.written)));
                         if (hasData) rased++;
                     });
                     rows.push({ stage, subj: subj.name, total: students.length, rased, notRased: students.length - rased });
@@ -14589,7 +14590,7 @@ ${students.join(' | ')}
             counters = counters || { added: 0, overwritten: 0, skipped: 0 };
             const k = sid + '_t' + term + '_' + subj;
             const cur = DB.grades && DB.grades[k] ? DB.grades[k][field] : undefined;
-            const hasValue = cur !== undefined && cur !== null && cur !== '' && (+cur > 0);
+            const hasValue = cur !== undefined && cur !== null && cur !== '';
             if (hasValue && !allowOverwrite) { counters.skipped++; return false; }
             if (hasValue && allowOverwrite) counters.overwritten++; else counters.added++;
             if (!DB.grades) DB.grades = {};
@@ -14820,7 +14821,8 @@ ${students.join(' | ')}
                     let rased = 0;
                     students.forEach(st => {
                         const g = DB.grades[st.id + '_t' + term + '_' + subj.name];
-                        const has = g && ((subj.behavior && (g.behavior || 0) > 0) || (subj.oral && (g.oral || 0) > 0) || (subj.attendance && (g.attendance || 0) > 0) || (subj.written && (g.written || 0) > 0));
+                        const _set2 = v => v !== undefined && v !== null && v !== '';
+                        const has = g && ((subj.behavior && _set2(g.behavior)) || (subj.oral && _set2(g.oral)) || (subj.attendance && _set2(g.attendance)) || (subj.written && _set2(g.written)));
                         if (has) rased++;
                     });
                     if (rased < students.length) allDone = false;
@@ -14882,7 +14884,7 @@ ${students.join(' | ')}
             const rowBg = isFirst ? 'background:linear-gradient(135deg,#fffde7,#fef9c3)' : isFailed ? 'background:linear-gradient(135deg,#fff5f5,#fee2e2)' : isRepeater ? 'background:linear-gradient(135deg,#fef3c7,#fde68a)' : '';
                 let row = `<tr style="${rowBg}"><td class="sticky-col" style="${isFirst ? 'background:linear-gradient(135deg,#fffde7,#fef9c3);' : isFailed ? 'background:linear-gradient(135deg,#fff5f5,#fee2e2);' : ''}">${isFirst ? '🥇 ' : isFailed ? '❌ ' : ''}${(st.status || '').indexOf('راسب') !== -1 ? '🔄 ' : ''}${st.name}</td>`;
                 const _autoAtt = !!(DB.settings && DB.settings.autoAttendanceEnabled);
-                subjs.forEach(s => { const flds=['behavior','oral','attendance','written'].filter(f=>s[f]>0); flds.forEach(f => { const val=getGrade(st.id,term,s.name,f); const cls=val>s[f]?' over':val>0?' filled':''; if(_autoAtt && f==='attendance'){ row += `<td style="border-left:1px solid rgba(212,192,138,.2)"><input type="number" class="gi auto-att${val>0?' filled':''}" readonly tabindex="-1" value="${val||''}" placeholder="—" title="تُحسب تلقائيًا من سجل الغياب — معطّلة للتعديل اليدوي" data-sid="${st.id}" data-term="${term}" data-subj="${s.name}" data-field="${f}" data-max="${s[f]}" style="background:#eef6ee;color:#15803d;font-weight:800;cursor:not-allowed"></td>`; } else { row += `<td style="border-left:1px solid rgba(212,192,138,.2)"><input type="number" class="gi${cls}" min="0" max="${s[f]}" value="${val||''}" placeholder="—" data-sid="${st.id}" data-term="${term}" data-subj="${s.name}" data-field="${f}" data-max="${s[f]}" oninput="handleGradeInput(this)" onchange="handleGradeInput(this)"></td>`; } }); if(flds.length){ const sTotal=calcSubjTotal(st.id,term,s.name),sMax=getSubjMax(s.name,stage),sPct=sMax>0?sTotal/sMax*100:0,sSafeKey=s.name.replace(/\s/g,'_'); row += `<td id="sc-${st.id}-${term}-${sSafeKey}" style="border-left:2px solid rgba(255,215,0,.35);background:rgba(255,215,0,.07);text-align:center;white-space:nowrap;padding:4px 10px;min-width:60px"><span style="font-size:13px;font-weight:900;color:${sTotal>0?getGradeColor(sPct):'var(--muted)'}">${sTotal||'—'}</span><span style="font-size:10px;color:var(--muted);font-weight:400">/${sMax}</span></td>`; } });
+                subjs.forEach(s => { const flds=['behavior','oral','attendance','written'].filter(f=>s[f]>0); flds.forEach(f => { const raw=getGradeRaw(st.id,term,s.name,f); const has=raw!==undefined; const val=has?raw:''; const cls=has&&raw>s[f]?' over':has?' filled':''; if(_autoAtt && f==='attendance'){ row += `<td style="border-left:1px solid rgba(212,192,138,.2)"><input type="number" class="gi auto-att${has?' filled':''}" readonly tabindex="-1" value="${val}" placeholder="—" title="تُحسب تلقائيًا من سجل الغياب — معطّلة للتعديل اليدوي" data-sid="${st.id}" data-term="${term}" data-subj="${s.name}" data-field="${f}" data-max="${s[f]}" style="background:#eef6ee;color:#15803d;font-weight:800;cursor:not-allowed"></td>`; } else { row += `<td style="border-left:1px solid rgba(212,192,138,.2)"><input type="number" class="gi${cls}" min="0" max="${s[f]}" value="${val}" placeholder="—" data-sid="${st.id}" data-term="${term}" data-subj="${s.name}" data-field="${f}" data-max="${s[f]}" oninput="handleGradeInput(this)" onchange="handleGradeInput(this)"></td>`; } }); if(flds.length){ const sTotal=calcSubjTotal(st.id,term,s.name),sMax=getSubjMax(s.name,stage),sPct=sMax>0?sTotal/sMax*100:0,sSafeKey=s.name.replace(/\s/g,'_'),sHas=flds.some(f=>hasGradeVal(st.id,term,s.name,f)); row += `<td id="sc-${st.id}-${term}-${sSafeKey}" style="border-left:2px solid rgba(255,215,0,.35);background:rgba(255,215,0,.07);text-align:center;white-space:nowrap;padding:4px 10px;min-width:60px"><span style="font-size:13px;font-weight:900;color:${sHas?getGradeColor(sPct):'var(--muted)'}">${sHas?sTotal:'—'}</span><span style="font-size:10px;color:var(--muted);font-weight:400">/${sMax}</span></td>`; } });
                 row += `<td class="grade-total-cell" id="tc-${st.id}-${term}">${total}<span style="font-size:10px;color:var(--muted);font-weight:400">/${max}</span>${mercyInfo ? '<span style="font-size:9px;color:#d97706;font-weight:700" title="درجة رأفة: +' + mercyInfo.added + '"> \u{1F3AF}+' + mercyInfo.added + '</span>' : ''}</td><td id="tp-${st.id}-${term}"><span style="font-size:13px;font-weight:900;color:${getGradeColor(pct)}">${pct.toFixed(1)}%</span></td><td id="tg-${st.id}-${term}"><span class="badge ${getGradeClass(pct)}">${getGradeText(pct)}</span></td>`;
                 const hasN = spGetNotesCount(st.id) > 0;
                 row += `<td style="white-space:nowrap"><button class="btn btn-sm allow-ro" style="background:${hasN ? '#e8f0ff' : 'var(--bg)'};color:${hasN ? '#1e40af' : 'var(--muted)'};border:1.5px solid ${hasN ? '#93c5fd' : 'var(--border)'};font-size:12px" title="${hasN ? 'يوجد ملاحظات — انقر للعرض' : 'أضف ملاحظة'}" onclick="openSPNotes('${st.id}')">${hasN ? '📝' : '📋'}</button> <button class="btn btn-danger btn-sm" title="حذف درجات هذا الطالب في هذا الترم" onclick="deleteStudentTermGrades('${st.id}','${term}','${stage}')">🗑️</button></td></tr>`;
@@ -14891,17 +14893,25 @@ ${students.join(' | ')}
         }
         let _gradeAutoSaveTimer = null;
         function handleGradeInput(el) {
-            if (!IS_EDIT_MODE) { el.value = getGrade(el.dataset.sid, el.dataset.term, el.dataset.subj, el.dataset.field) || ''; return; }
+            if (!IS_EDIT_MODE) { const r0 = getGradeRaw(el.dataset.sid, el.dataset.term, el.dataset.subj, el.dataset.field); el.value = r0 === undefined ? '' : r0; return; }
             const sid = el.dataset.sid, term = el.dataset.term, subj = el.dataset.subj, field = el.dataset.field, max = +el.dataset.max;
-            let val = parseFloat(el.value) || 0;
-            if (val < 0) { val = 0; el.value = 0; }
-            if (val > max) {
-                val = max;
-                el.value = max;
-                showToast('⚠️ الحد الأقصى لهذه المادة هو ' + max);
+            const isEmpty = String(el.value).trim() === '';
+            if (isEmpty) {
+                const k = sid + '_t' + term + '_' + subj;
+                if (DB.grades && DB.grades[k]) delete DB.grades[k][field];
+                el.className = 'gi';
+            } else {
+                let val = parseFloat(el.value);
+                if (!isFinite(val)) val = 0;
+                if (val < 0) { val = 0; el.value = 0; }
+                if (val > max) {
+                    val = max;
+                    el.value = max;
+                    showToast('⚠️ الحد الأقصى لهذه المادة هو ' + max);
+                }
+                setGrade(sid, term, subj, field, val);
+                el.className = 'gi filled';
             }
-            setGrade(sid, term, subj, field, val);
-            el.className = 'gi' + (val > 0 ? ' filled' : '');
             const stage = (document.getElementById('exam-stage-sel') || { value: '' }).value;
             const rawTotal = calcTotal(sid, term, stage), termMax = getTermMax(stage, term);
             const total = applyMercyGrade(rawTotal, termMax);
@@ -14914,7 +14924,7 @@ ${students.join(' | ')}
             // ✅ تحديث مجموع المادة لحظياً
             const sSafeKey = subj.replace(/\s/g,'_');
             const sc = document.getElementById('sc-' + sid + '-' + term + '-' + sSafeKey);
-            if (sc) { const sTotal=calcSubjTotal(sid,term,subj),sMax=getSubjMax(subj,stage),sPct=sMax>0?sTotal/sMax*100:0; sc.innerHTML=`<span style="font-size:13px;font-weight:900;color:${sTotal>0?getGradeColor(sPct):'var(--muted)'}">${sTotal||'—'}</span><span style="font-size:10px;color:var(--muted);font-weight:400">/${sMax}</span>`; }
+            if (sc) { const sTotal=calcSubjTotal(sid,term,subj),sMax=getSubjMax(subj,stage),sPct=sMax>0?sTotal/sMax*100:0,sHas=['behavior','oral','attendance','written'].some(f=>hasGradeVal(sid,term,subj,f)); sc.innerHTML=`<span style="font-size:13px;font-weight:900;color:${sHas?getGradeColor(sPct):'var(--muted)'}">${sHas?sTotal:'—'}</span><span style="font-size:10px;color:var(--muted);font-weight:400">/${sMax}</span>`; }
             // ✅ حفظ تلقائي مشترك — timer واحد لكل الخانات
             clearTimeout(_gradeAutoSaveTimer);
             _gradeAutoSaveTimer = setTimeout(() => saveDB(), 600);
@@ -15019,12 +15029,13 @@ ${students.join(' | ')}
       <div class="mgc-fields">`;
                 const _autoAttM = !!(DB.settings && DB.settings.autoAttendanceEnabled);
                 flds.forEach(f => {
-                    const val = getGrade(st.id, term, s.name, f) || '';
-                    const cls = val > s[f] ? ' over' : val > 0 ? ' filled' : '';
+                    const raw = getGradeRaw(st.id, term, s.name, f);
+                    const val = raw === undefined ? '' : raw;
+                    const cls = raw !== undefined && raw > s[f] ? ' over' : raw !== undefined ? ' filled' : '';
                     if (_autoAttM && f === 'attendance') {
                         html += `<div class="mgc-field">
         <label>${fmap[f]} 🔒</label>
-        <input type="number" class="auto-att${val > 0 ? ' filled' : ''}" readonly tabindex="-1" value="${val}" placeholder="—"
+        <input type="number" class="auto-att${raw !== undefined ? ' filled' : ''}" readonly tabindex="-1" value="${val}" placeholder="—"
           title="تُحسب تلقائيًا من سجل الغياب"
           style="background:#eef6ee;color:#15803d;font-weight:800;cursor:not-allowed">
         <div class="max-hint">من ${s[f]} (تلقائي)</div>
