@@ -17072,14 +17072,14 @@ body{font-family:'Cairo',sans-serif;direction:rtl;background:#fff;color:#111;fon
                         if (has) sHas = true;
                         const val = has ? raw : 0;
                         const over = has && val > s[f] ? ';color:#c0392b;font-weight:900' : '';
-                        cells += `<td style="text-align:center;font-size:12px;${fi === 0 ? 'border-left:2px solid #ddd;' : ''}${over}">${has ? val : '<span style="color:#bbb">—</span>'}</td>`;
+                        cells += `<td style="text-align:center;font-size:12px;${fi === 0 ? 'border-left:2px solid #ddd;' : ''}${over}">${val}</td>`;
                     });
                     if (flds.length) {
                         const sTotal = calcSubjTotal(st.id, String(term), s.name);
                         const sMax = getSubjMax(s.name, stage);
                         const sPct = sMax > 0 ? sTotal / sMax * 100 : 0;
-                        const sColor = sPct < DB.settings.passPct && sTotal > 0 ? '#c0392b' : '#0d2645';
-                        cells += `<td style="text-align:center;border-left:2px solid rgba(201,162,39,.35);background:rgba(255,215,0,.06);font-weight:900;font-size:12px;color:${sColor}">${sHas ? sTotal : '<span style="color:#bbb">—</span>'}<span style="font-size:9px;color:#999;font-weight:400">/${sMax}</span></td>`;
+                        const sColor = sPct < DB.settings.passPct ? '#c0392b' : '#0d2645';
+                        cells += `<td style="text-align:center;border-left:2px solid rgba(201,162,39,.35);background:rgba(255,215,0,.06);font-weight:900;font-size:12px;color:${sColor}">${sTotal}<span style="font-size:9px;color:#999;font-weight:400">/${sMax}</span></td>`;
                     }
                 });
                 return `<tr style="${rowStyle}">
@@ -17854,7 +17854,7 @@ body{font-family:'Cairo',sans-serif;direction:rtl;background:#fff;color:#000;}
                 const gc = st.pct >= DB.settings.vgPct ? 'b-s' : st.pct >= DB.settings.passPct ? 'b-w' : 'b-d';
                 let row = `<tr><td class="idx">${i+1}</td><td class="nm">${(st.status || '').indexOf('راسب') !== -1 ? '🔄 ' : ''}${st.name}</td>`;
                 st.subjData.forEach(sd => {
-                    sd.tvals.forEach(v => { row += `<td>${v === null ? '—' : v}</td>`; });
+                    sd.tvals.forEach(v => { row += `<td>${v === null ? 0 : v}</td>`; });
                     row += `<td class="tsum">${sd.sum}</td>`;
                 });
                 st.terms.forEach(t => { row += `<td class="tsum">${t}</td>`; });
@@ -18165,7 +18165,7 @@ html,body{font-family:'Cairo','Tajawal','Segoe UI',Tahoma,Arial,sans-serif;direc
                             if (has) sHas = true;
                             const v = has ? raw : 0;
                             const over = has && v > s[f] ? 'color:#c0392b;font-weight:900' : '';
-                            cells += `<td style="${over}">${has ? v : '—'}<br><span style="font-size:8.5px;color:#888;font-weight:400">/${s[f]}</span></td>`;
+                            cells += `<td style="${over}">${v}<br><span style="font-size:8.5px;color:#888;font-weight:400">/${s[f]}</span></td>`;
                         } else {
                             cells += `<td style="color:#ccc">—</td>`;
                         }
@@ -18173,7 +18173,7 @@ html,body{font-family:'Cairo','Tajawal','Segoe UI',Tahoma,Arial,sans-serif;direc
                     rows += `<tr>
                         <td class="subject">${s.name}${s.teacher ? `<div class="teacher">👤 ${s.teacher}</div>` : ''}</td>
                         ${cells}
-                        <td class="total-cell">${sHas ? sTotal : '—'}</td>
+                        <td class="total-cell">${sTotal}</td>
                         <td style="color:#666;font-weight:600">${sMax}</td>
                         <td class="pct-cell" style="color:${sColor}">${sMax > 0 ? sPct.toFixed(1) + '%' : '—'}</td>
                     </tr>`;
@@ -18342,15 +18342,15 @@ html,body{font-family:'Cairo','Tajawal','Segoe UI',Tahoma,Arial,sans-serif;direc
                      const sColor = sPassed ? '#155724' : (sHasAny ? '#991b1b' : '#888');
                      const sGradeTxt = sHasAny ? getGradeText(sPct) : '—';
                      if (sHasAny) { sPassed ? passedSubjCount++ : failedSubjCount++; subjStats.push({ name: s.name, pct: sPct }); }
-                     const cellHtml = (v, mx, has) => {
-                         const p = mx > 0 ? (v / mx * 100) : 0;
-                         const col = !has ? '#888' : (p >= passPct ? '#155724' : '#991b1b');
-                         return `<td style="color:${col}">${has ? v : '—'}<br><span style="font-size:8.5px;color:#888;font-weight:400">/${mx}</span>${has ? `<br><span style="font-size:8px;color:${col};font-weight:700">${p.toFixed(0)}%</span>` : ''}</td>`;
-                     };
-                     rows += `<tr>
-                         <td class="subject">${s.name}${s.teacher ? `<span class="teacher">👤 ${s.teacher}</span>` : ''}</td>
-                         ${cellHtml(s1, sMax, h1)}${cellHtml(s2, sMax, h2)}${cellHtml(s3, sMax, h3)}
-                         <td class="total-cell">${sHasAny ? sTotal : '—'}</td>
+                                          const cellHtml = (v, mx, has) => {
+                          const p = mx > 0 ? (v / mx * 100) : 0;
+                          const col = p >= passPct ? '#155724' : '#991b1b';
+                          return `<td style="color:${col}">${v}<br><span style="font-size:8.5px;color:#888;font-weight:400">/${mx}</span><br><span style="font-size:8px;color:${col};font-weight:700">${p.toFixed(0)}%</span></td>`;
+                      };
+                      rows += `<tr>
+                          <td class="subject">${s.name}${s.teacher ? `<span class="teacher">👤 ${s.teacher}</span>` : ''}</td>
+                          ${cellHtml(s1, sMax, h1)}${cellHtml(s2, sMax, h2)}${cellHtml(s3, sMax, h3)}
+                          <td class="total-cell">${sTotal}</td>
                          <td style="color:#666;font-weight:600">${sAnnualMax}</td>
                          <td class="pct-cell" style="color:${sColor}">${sAnnualMax > 0 ? sPct.toFixed(1) + '%' : '—'}</td>
                          <td style="font-size:9.5px;font-weight:700;color:${sColor}">${sGradeTxt}</td>
