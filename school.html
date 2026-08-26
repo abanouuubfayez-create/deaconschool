@@ -17846,7 +17846,6 @@ body{font-family:'Cairo',sans-serif;direction:rtl;background:#fff;color:#000;}
         // ─────────────────────────────────────────
         function buildTotalHTML(stage) {
             const students = DB.students.filter(s => s.stage === stage && !isGraduate(s));
-            const max = getTermMax(stage, '1');
             const gMax = getAnnualMax(stage);
             const subjs = DB.subjects[stage] || [];
             const CSS = _getBuilderCSS();
@@ -17858,7 +17857,9 @@ body{font-family:'Cairo',sans-serif;direction:rtl;background:#fff;color:#000;}
             const ranked = students.map(st => {
                 const subjData = subjs.map(sb => {
                     const tvals = [1, 2, 3].map(t => isSubjectActiveInTerm(sb, t) ? calcSubjTotal(st.id, String(t), sb.name) : null);
-                    return { name: sb.name, max: getSubjMax(sb.name, stage), tvals, sum: tvals.reduce((a,b)=>a + (b || 0),0) };
+                    const activeCount = [1, 2, 3].filter(t => isSubjectActiveInTerm(sb, t)).length;
+                    const sum = activeCount === 0 ? null : tvals.reduce((a, b) => a + (b || 0), 0);
+                    return { name: sb.name, max: getSubjMax(sb.name, stage), tvals, sum };
                 });
                 const terms = [1, 2, 3].map(t => calcTotal(st.id, String(t), stage));
                 const rawGrand = terms.reduce((s, x) => s + x, 0);
@@ -17887,7 +17888,9 @@ body{font-family:'Cairo',sans-serif;direction:rtl;background:#fff;color:#000;}
               .tot-tbl tbody td.tsum{background:#fff4d6;font-weight:900;color:#7a5a10}
               .tot-tbl tbody td.gtot{background:#0d2645;color:#fff;font-weight:900;font-size:11.5px}
               .tot-tbl tbody td.gpct{background:#c9a227;color:#fff;font-weight:900}
+              .tot-tbl tbody td.dis-cell{background:#f8fafc;color:#94a3b8;font-size:9px;font-weight:700}
               .tot-tbl tbody tr:nth-child(even) td{background-color:#faf7ee}
+              .tot-tbl tbody tr:nth-child(even) td.dis-cell{background-color:#f1f5f9;color:#94a3b8}
               .tot-tbl tbody tr:nth-child(even) td.tsum{background:#fff0c4}
               .tot-tbl tbody tr:nth-child(even) td.gtot{background:#0d2645}
               .tot-tbl tbody tr:nth-child(even) td.gpct{background:#c9a227}
@@ -17897,11 +17900,25 @@ body{font-family:'Cairo',sans-serif;direction:rtl;background:#fff;color:#000;}
             let topRow = '<tr><th rowspan="2" style="width:28px">#</th><th rowspan="2" style="width:130px">اسم الطالب</th>';
             let subRow = '<tr>';
             subjs.forEach(sb => {
-                topRow += `<th colspan="4" class="sub-h" title="${sb.name}">${sb.name}<br><span style="font-weight:400;font-size:8.5px">/${getSubjMax(sb.name, stage)}</span></th>`;
-                subRow += '<th class="sub-h">ت1</th><th class="sub-h">ت2</th><th class="sub-h">ت3</th><th class="sum-h">مج</th>';
+                const sMax = getSubjMax(sb.name, stage);
+                topRow += `<th colspan="4" class="sub-h" title="${sb.name}">${sb.name}<br><span style="font-weight:400;font-size:8.5px">/${sMax}</span></th>`;
+                [1, 2, 3].forEach(t => {
+                    const act = isSubjectActiveInTerm(sb, t);
+                    if (act) {
+                        subRow += `<th class="sub-h">ت${t}</th>`;
+                    } else {
+                        subRow += `<th class="sub-h" style="opacity:.7;background:#142c48" title="المادة معطّلة في ترم ${t}">ت${t}🚫</th>`;
+                    }
+                });
+                subRow += '<th class="sum-h">مج</th>';
             });
-            topRow += `<th colspan="3" class="sum-h">إجمالي كل ترم<br><span style="font-weight:400;font-size:8.5px">/${max}</span></th>`;
-            subRow += '<th class="sum-h">ت1</th><th class="sum-h">ت2</th><th class="sum-h">ت3</th>';
+            topRow += `<th colspan="3" class="sum-h">إجمالي كل ترم</th>`;
+            const t1MaxVal = getTermMax(stage, '1');
+            const t2MaxVal = getTermMax(stage, '2');
+            const t3MaxVal = getTermMax(stage, '3');
+            subRow += `<th class="sum-h">ت1<br><span style="font-weight:400;font-size:7.5px">/${t1MaxVal}</span></th>`;
+            subRow += `<th class="sum-h">ت2<br><span style="font-weight:400;font-size:7.5px">/${t2MaxVal}</span></th>`;
+            subRow += `<th class="sum-h">ت3<br><span style="font-weight:400;font-size:7.5px">/${t3MaxVal}</span></th>`;
             topRow += `<th rowspan="2" style="width:60px">الكلي<br><span style="font-weight:400;font-size:8.5px">/${gMax}</span></th>`;
             topRow += '<th rowspan="2" style="width:48px">النسبة</th><th rowspan="2" style="width:60px">التقدير</th></tr>';
             subRow += '</tr>';
@@ -17911,8 +17928,18 @@ body{font-family:'Cairo',sans-serif;direction:rtl;background:#fff;color:#000;}
                 const gc = st.pct >= DB.settings.vgPct ? 'b-s' : st.pct >= DB.settings.passPct ? 'b-w' : 'b-d';
                 let row = `<tr><td class="idx">${i+1}</td><td class="nm">${(st.status || '').indexOf('راسب') !== -1 ? '🔄 ' : ''}${st.name}</td>`;
                 st.subjData.forEach(sd => {
-                    sd.tvals.forEach(v => { row += `<td>${v === null ? 0 : v}</td>`; });
-                    row += `<td class="tsum">${sd.sum}</td>`;
+                    sd.tvals.forEach(v => {
+                        if (v === null) {
+                            row += `<td class="dis-cell" title="المادة معطّلة في هذا الترم">معطّل</td>`;
+                        } else {
+                            row += `<td>${v}</td>`;
+                        }
+                    });
+                    if (sd.sum === null) {
+                        row += `<td class="tsum dis-cell" title="المادة معطّلة بالكامل">معطّل</td>`;
+                    } else {
+                        row += `<td class="tsum">${sd.sum}</td>`;
+                    }
                 });
                 st.terms.forEach(t => { row += `<td class="tsum">${t}</td>`; });
                 row += `<td class="gtot">${st.grand}</td>`;
@@ -23439,21 +23466,30 @@ ${_fcFrame()}
     <span style="color:rgba(255,255,255,.55);font-size:11px">عرض فقط — لا يمكن التعديل</span>
   </div>
   <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
-    <thead><tr style="background:#1a3d6e">
-      <th style="padding:8px 12px;text-align:right;color:#fff;font-weight:700">#</th>
-      <th style="padding:8px 12px;text-align:right;color:#fff;font-weight:700">الاسم</th>
-      <th style="padding:8px 12px;text-align:center;color:#fff;font-weight:700">المرحلة</th>
-      <th style="padding:8px 12px;text-align:center;color:#fff;font-weight:700">النوع</th>
-    </tr></thead><tbody>`;
-            students.forEach((st, i) => {
-                html += `<tr style="border-bottom:1px solid rgba(212,192,138,.3);background:${i % 2 === 0 ? '#fff' : 'rgba(244,239,228,.4)'}">
-      <td style="padding:8px 12px;text-align:center;color:var(--muted);font-size:11px">${i + 1}</td>
-      <td style="padding:8px 12px;font-weight:700;font-size:13px">${st.name || ''}</td>
-      <td style="padding:8px 12px;text-align:center"><span style="background:rgba(13,38,69,.1);color:var(--navy);border-radius:12px;padding:2px 8px;font-size:11px;font-weight:700">${st.stage || ''}</span></td>
-      <td style="padding:8px 12px;text-align:center;font-size:12px">${st.gender || ''}</td>
-    </tr>`;
-            });
-            html += '</tbody></table></div>';
+      <thead><tr style="background:linear-gradient(135deg,var(--navy),var(--navy-light));color:#fff">
+        <th style="padding:8px 12px;text-align:right;white-space:nowrap">المادة</th>
+        ${TL.map(l => `<th style="padding:8px;text-align:center;white-space:nowrap">الترم ${l}</th>`).join('')}
+        <th style="padding:8px;text-align:center">الأفضل</th>
+      </tr></thead><tbody>
+      ${subjs.map(sj => {
+                    const scores = [1, 2, 3].map(t => isSubjectActiveInTerm(sj, t) ? calcSubjTotal(s.id, String(t), sj.name) : null);
+                    const validScores = scores.filter(x => x !== null);
+                    const mx = getSubjMax(sj.name, s.stage);
+                    const best = validScores.length ? Math.max(...validScores) : 0;
+                    return `<tr style="border-bottom:1px solid var(--bg)">
+          <td style="padding:8px 12px;font-weight:700;white-space:nowrap">${sj.name}</td>
+          ${scores.map((sc, i) => {
+                        if (sc === null) {
+                            return `<td style="padding:8px;text-align:center;font-weight:700;color:#94a3b8;background:#f8fafc;font-size:10px">معطّل</td>`;
+                        }
+                        const pct = mx > 0 ? sc / mx * 100 : 0, col = getGradeColor(pct);
+                        const isBest = sc === best && sc > 0;
+                        return `<td style="padding:8px;text-align:center;font-weight:700;color:${col};background:${isBest ? col + '15' : ''}">${sc}<span style="font-size:9px;color:var(--muted)">/${mx}</span></td>`;
+                    }).join('')}
+          <td style="padding:8px;text-align:center">${validScores.length ? `<span style="background:#e8f5e9;color:#155724;border-radius:20px;padding:2px 10px;font-size:10px;font-weight:700">ترم ${scores.indexOf(best) + 1}</span>` : '<span style="color:#94a3b8;font-size:10px">—</span>'}</td>
+        </tr>`;
+                }).join('')}
+    </tbody></table></div>';
             cont.innerHTML = html;
         }
 
@@ -24062,15 +24098,23 @@ ${_fcFrame()}
         <th style="padding:8px;text-align:center">الأفضل</th>
       </tr></thead><tbody>
       ${subjs.map(sj => {
-                    const scores = [1, 2, 3].map(t => calcSubjTotal(s.id, String(t), sj.name));
-                    const mx = getSubjMax(sj.name, s.stage), best = Math.max(...scores);
+                    const scores = [1, 2, 3].map(t => isSubjectActiveInTerm(sj, t) ? calcSubjTotal(s.id, String(t), sj.name) : null);
+                    const validScores = scores.filter(x => x !== null);
+                    const mx = getSubjMax(sj.name, s.stage);
+                    const best = validScores.length ? Math.max(...validScores) : 0;
                     return `<tr style="border-bottom:1px solid var(--bg)">
           <td style="padding:8px 12px;font-weight:700;white-space:nowrap">${sj.name}</td>
           ${scores.map((sc, i) => {
+                        if (sc === null) {
+                            return `<td style="padding:8px;text-align:center;font-weight:700;color:#94a3b8;background:#f8fafc;font-size:10px">معطّل</td>`;
+                        }
                         const pct = mx > 0 ? sc / mx * 100 : 0, col = getGradeColor(pct);
                         const isBest = sc === best && sc > 0;
                         return `<td style="padding:8px;text-align:center;font-weight:700;color:${col};background:${isBest ? col + '15' : ''}">${sc}<span style="font-size:9px;color:var(--muted)">/${mx}</span></td>`;
                     }).join('')}
+          <td style="padding:8px;text-align:center">${validScores.length ? `<span style="background:#e8f5e9;color:#155724;border-radius:20px;padding:2px 10px;font-size:10px;font-weight:700">ترم ${scores.indexOf(best) + 1}</span>` : '<span style="color:#94a3b8;font-size:10px">—</span>'}</td>
+        </tr>`;
+                }).join('')}
           <td style="padding:8px;text-align:center"><span style="background:#e8f5e9;color:#155724;border-radius:20px;padding:2px 10px;font-size:10px;font-weight:700">ترم ${scores.indexOf(best) + 1}</span></td>
         </tr>`;
                 }).join('')}
