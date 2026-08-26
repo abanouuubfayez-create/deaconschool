@@ -17847,7 +17847,9 @@ body{font-family:'Cairo',sans-serif;direction:rtl;background:#fff;color:#000;}
         function buildTotalHTML(stage) {
             const students = DB.students.filter(s => s.stage === stage && !isGraduate(s));
             const gMax = getAnnualMax(stage);
-            const subjs = DB.subjects[stage] || [];
+            const rawSubjs = DB.subjects[stage] || [];
+            // تصفية المواد التي لها على الأقل ترم واحد مفعّل
+            const subjs = rawSubjs.filter(sb => [1, 2, 3].some(t => isSubjectActiveInTerm(sb, t)));
             const CSS = _getBuilderCSS();
             const _ttTeacherStr = _getTeacherStrForPrint(stage);
             let html = CSS + _buildHeader('مجموع الترمات — كل المواد وكل الدرجات', `${stage} — ${DB.schoolYear}`, _ttTeacherStr, students.length);
@@ -17856,10 +17858,20 @@ body{font-family:'Cairo',sans-serif;direction:rtl;background:#fff;color:#000;}
 
             const ranked = students.map(st => {
                 const subjData = subjs.map(sb => {
-                    const tvals = [1, 2, 3].map(t => isSubjectActiveInTerm(sb, t) ? calcSubjTotal(st.id, String(t), sb.name) : null);
-                    const activeCount = [1, 2, 3].filter(t => isSubjectActiveInTerm(sb, t)).length;
-                    const sum = activeCount === 0 ? null : tvals.reduce((a, b) => a + (b || 0), 0);
-                    return { name: sb.name, max: getSubjMax(sb.name, stage), tvals, sum };
+                    const activeTerms = [1, 2, 3].filter(t => isSubjectActiveInTerm(sb, t));
+                    const activeTermsData = activeTerms.map(t => ({
+                        term: t,
+                        val: calcSubjTotal(st.id, String(t), sb.name)
+                    }));
+                    const sum = activeTermsData.reduce((a, b) => a + b.val, 0);
+                    return {
+                        name: sb.name,
+                        max: getSubjMax(sb.name, stage),
+                        activeTerms,
+                        activeTermsData,
+                        hasMultipleTerms: activeTerms.length > 1,
+                        sum
+                    };
                 });
                 const terms = [1, 2, 3].map(t => calcTotal(st.id, String(t), stage));
                 const rawGrand = terms.reduce((s, x) => s + x, 0);
@@ -17888,29 +17900,27 @@ body{font-family:'Cairo',sans-serif;direction:rtl;background:#fff;color:#000;}
               .tot-tbl tbody td.tsum{background:#fff4d6;font-weight:900;color:#7a5a10}
               .tot-tbl tbody td.gtot{background:#0d2645;color:#fff;font-weight:900;font-size:11.5px}
               .tot-tbl tbody td.gpct{background:#c9a227;color:#fff;font-weight:900}
-              .tot-tbl tbody td.dis-cell{background:#f8fafc;color:#94a3b8;font-size:9px;font-weight:700}
               .tot-tbl tbody tr:nth-child(even) td{background-color:#faf7ee}
-              .tot-tbl tbody tr:nth-child(even) td.dis-cell{background-color:#f1f5f9;color:#94a3b8}
               .tot-tbl tbody tr:nth-child(even) td.tsum{background:#fff0c4}
               .tot-tbl tbody tr:nth-child(even) td.gtot{background:#0d2645}
               .tot-tbl tbody tr:nth-child(even) td.gpct{background:#c9a227}
             </style>`;
 
-            // Header: # | name | for each subject: ت1 ت2 ت3 مج | إج ت1 | إج ت2 | إج ت3 | الكلي | %  | تقدير
+            // Header: # | name | for each subject: active terms (and sum if > 1) | إج ت1 | إج ت2 | إج ت3 | الكلي | % | تقدير
             let topRow = '<tr><th rowspan="2" style="width:28px">#</th><th rowspan="2" style="width:130px">اسم الطالب</th>';
             let subRow = '<tr>';
             subjs.forEach(sb => {
                 const sMax = getSubjMax(sb.name, stage);
-                topRow += `<th colspan="4" class="sub-h" title="${sb.name}">${sb.name}<br><span style="font-weight:400;font-size:8.5px">/${sMax}</span></th>`;
-                [1, 2, 3].forEach(t => {
-                    const act = isSubjectActiveInTerm(sb, t);
-                    if (act) {
-                        subRow += `<th class="sub-h">ت${t}</th>`;
-                    } else {
-                        subRow += `<th class="sub-h" style="opacity:.7;background:#142c48" title="المادة معطّلة في ترم ${t}">ت${t}🚫</th>`;
-                    }
+                const activeTerms = [1, 2, 3].filter(t => isSubjectActiveInTerm(sb, t));
+                const hasMultiple = activeTerms.length > 1;
+                const colSpan = activeTerms.length + (hasMultiple ? 1 : 0);
+                topRow += `<th colspan="${colSpan}" class="sub-h" title="${sb.name}">${sb.name}<br><span style="font-weight:400;font-size:8.5px">/${sMax}</span></th>`;
+                activeTerms.forEach(t => {
+                    subRow += `<th class="sub-h">ت${t}</th>`;
                 });
-                subRow += '<th class="sum-h">مج</th>';
+                if (hasMultiple) {
+                    subRow += '<th class="sum-h">مج</th>';
+                }
             });
             topRow += `<th colspan="3" class="sum-h">إجمالي كل ترم</th>`;
             const t1MaxVal = getTermMax(stage, '1');
@@ -17928,16 +17938,10 @@ body{font-family:'Cairo',sans-serif;direction:rtl;background:#fff;color:#000;}
                 const gc = st.pct >= DB.settings.vgPct ? 'b-s' : st.pct >= DB.settings.passPct ? 'b-w' : 'b-d';
                 let row = `<tr><td class="idx">${i+1}</td><td class="nm">${(st.status || '').indexOf('راسب') !== -1 ? '🔄 ' : ''}${st.name}</td>`;
                 st.subjData.forEach(sd => {
-                    sd.tvals.forEach(v => {
-                        if (v === null) {
-                            row += `<td class="dis-cell" title="المادة معطّلة في هذا الترم">معطّل</td>`;
-                        } else {
-                            row += `<td>${v}</td>`;
-                        }
+                    sd.activeTermsData.forEach(item => {
+                        row += `<td>${item.val}</td>`;
                     });
-                    if (sd.sum === null) {
-                        row += `<td class="tsum dis-cell" title="المادة معطّلة بالكامل">معطّل</td>`;
-                    } else {
+                    if (sd.hasMultipleTerms) {
                         row += `<td class="tsum">${sd.sum}</td>`;
                     }
                 });
