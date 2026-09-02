@@ -17646,59 +17646,59 @@ body{font-family:'Cairo',sans-serif;direction:rtl;background:#fff;color:#000;}
         // ═══════════════════════════════════════════════════════════════════
         function _annualCertStyles() {
             return `<style>
-  .annual-cert.nac{position:relative;width:100%;max-width:790px;margin:0 auto 26px;background:linear-gradient(160deg,#fffdf7 0%,#fbf3e2 100%);border:none;border-radius:10px;padding:18px;box-shadow:0 12px 44px rgba(13,38,69,.16);overflow:hidden;color:#2a2418;font-family:'Cairo',sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .annual-cert.nac::before{content:'';position:absolute;inset:9px;border:2.5px solid #c9a227;border-radius:7px;pointer-events:none;z-index:1}
-  .annual-cert.nac::after{content:'';position:absolute;inset:14px;border:1px solid rgba(201,162,39,.5);border-radius:5px;pointer-events:none;z-index:1}
-  .nac-corner{position:absolute;color:#c9a227;font-size:18px;line-height:1;z-index:2;opacity:.85}
-  .nac-corner.tl{top:16px;right:16px}.nac-corner.tr{top:16px;left:16px}.nac-corner.bl{bottom:16px;right:16px}.nac-corner.br{bottom:16px;left:16px}
-  .nac-wm{position:absolute;top:55%;left:50%;transform:translate(-50%,-50%) rotate(-27deg);font-family:'Amiri',serif;font-size:74px;font-weight:700;color:rgba(201,162,39,.06);white-space:nowrap;pointer-events:none;z-index:0}
-  .nac-inner{position:relative;z-index:3;padding:12px 16px}
-  .nac-head{background:linear-gradient(135deg,#0d2645 0%,#173a66 55%,#22518c 100%);border-radius:13px;padding:15px 18px 17px;text-align:center;box-shadow:0 5px 16px rgba(13,38,69,.32);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .annual-cert.nac{position:relative;width:100%;max-width:790px;min-height:920px;margin:0 auto 24px;background:linear-gradient(160deg,#fffdf7 0%,#fbf3e2 100%);border:none;border-radius:10px;padding:20px 22px;box-shadow:0 12px 44px rgba(13,38,69,.16);overflow:hidden;color:#2a2418;font-family:'Cairo',sans-serif;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .annual-cert.nac::before{content:'';position:absolute;inset:8px;border:2.5px solid #c9a227;border-radius:7px;pointer-events:none;z-index:1}
+  .annual-cert.nac::after{content:'';position:absolute;inset:12px;border:1px solid rgba(201,162,39,.5);border-radius:5px;pointer-events:none;z-index:1}
+  .nac-corner{position:absolute;color:#c9a227;font-size:16px;line-height:1;z-index:2;opacity:.85}
+  .nac-corner.tl{top:14px;right:14px}.nac-corner.tr{top:14px;left:14px}.nac-corner.bl{bottom:14px;right:14px}.nac-corner.br{bottom:14px;left:14px}
+  .nac-wm{position:absolute;top:55%;left:50%;transform:translate(-50%,-50%) rotate(-27deg);font-family:'Amiri',serif;font-size:70px;font-weight:700;color:rgba(201,162,39,.06);white-space:nowrap;pointer-events:none;z-index:0}
+  .nac-inner{position:relative;z-index:3;width:100%;height:100%;display:flex;flex-direction:column;justify-content:space-between;box-sizing:border-box;padding:2px 4px}
+  .nac-head{background:linear-gradient(135deg,#0d2645 0%,#173a66 55%,#22518c 100%);border-radius:11px;padding:8px 12px;text-align:center;box-shadow:0 4px 14px rgba(13,38,69,.32);-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .nac-logos{display:table;width:100%}
-  .nac-logo{display:table-cell;vertical-align:middle;width:60px}
-  .nac-logo img{width:54px;height:54px;border-radius:50%;border:2px solid #c9a227;display:block;background:#fff}
+  .nac-logo{display:table-cell;vertical-align:middle;width:48px}
+  .nac-logo img{width:44px;height:44px;border-radius:50%;border:2px solid #c9a227;display:block;background:#fff}
   .nac-logo.l img{margin-right:auto}.nac-logo.r img{margin-left:auto}
-  .nac-htext{display:table-cell;vertical-align:middle;padding:0 10px}
-  .nac-eparchy{font-size:10px;color:rgba(255,255,255,.62);margin-bottom:2px}
-  .nac-school{font-family:'Amiri',serif;font-size:18px;font-weight:700;color:#f1d175;line-height:1.35}
-  .nac-tagline{font-size:10px;color:rgba(255,255,255,.6);margin-top:3px}
+  .nac-htext{display:table-cell;vertical-align:middle;padding:0 6px}
+  .nac-eparchy{font-size:9px;color:rgba(255,255,255,.75);margin-bottom:1px}
+  .nac-school{font-family:'Amiri',serif;font-size:16px;font-weight:700;color:#f1d175;line-height:1.25}
+  .nac-tagline{font-size:9px;color:rgba(255,255,255,.7);margin-top:1px}
   .nac-title-wrap{text-align:center}
-  .nac-title{display:inline-block;margin:-14px auto 4px;position:relative;z-index:4;background:linear-gradient(135deg,#edc858,#c9a227);color:#0d2645;font-family:'Amiri',serif;font-size:21px;font-weight:700;padding:7px 36px;border-radius:30px;box-shadow:0 4px 13px rgba(201,162,39,.45);border:2px solid #fff6d9}
-  .nac-year{text-align:center;font-size:11.5px;color:#8a7320;font-weight:700;margin:9px 0 11px}
-  .nac-photo{display:block;margin:0 auto 10px;object-fit:cover;border:3px solid #c9a227;box-shadow:0 3px 10px rgba(0,0,0,.15)}
-  .nac-intro{text-align:center;font-size:12.5px;color:#6b5e3e;margin-bottom:3px}
-  .ac-student-name{font-family:'Amiri',serif;font-size:30px;font-weight:700;color:#0d2645;text-align:center;line-height:1.25;word-break:break-word;overflow-wrap:anywhere}
-  .nac-flourish{position:relative;width:210px;max-width:62%;border-top:2px solid #c9a227;margin:9px auto 13px;height:1px}
-  .nac-flourish::after{content:'❖';position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:#fdf6e6;color:#c9a227;font-size:13px;padding:0 9px}
-  .nac-chips{text-align:center;margin-bottom:13px}
-  .nac-chip{display:inline-block;background:#fff;border:1.5px solid #d4c08a;border-radius:20px;padding:4px 14px;font-size:11.5px;font-weight:700;color:#5a4a1e;margin:2px 4px;-webkit-print-color-adjust:exact}
+  .nac-title{display:inline-block;margin:-10px auto 2px;position:relative;z-index:4;background:linear-gradient(135deg,#edc858,#c9a227);color:#0d2645;font-family:'Amiri',serif;font-size:18px;font-weight:700;padding:4px 28px;border-radius:22px;box-shadow:0 3px 10px rgba(201,162,39,.45);border:2px solid #fff6d9}
+  .nac-year{text-align:center;font-size:10.5px;color:#8a7320;font-weight:700;margin:3px 0 4px}
+  .nac-photo{display:block;margin:0 auto 4px;object-fit:cover;border:2px solid #c9a227;box-shadow:0 3px 10px rgba(0,0,0,.15)}
+  .nac-intro{text-align:center;font-size:11px;color:#6b5e3e;margin-bottom:1px}
+  .ac-student-name{font-family:'Amiri',serif;font-size:25px;font-weight:700;color:#0d2645;text-align:center;line-height:1.15;word-break:break-word;overflow-wrap:anywhere}
+  .nac-flourish{position:relative;width:170px;max-width:55%;border-top:1.5px solid #c9a227;margin:4px auto 6px;height:1px}
+  .nac-flourish::after{content:'❖';position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:#fdf6e6;color:#c9a227;font-size:11px;padding:0 6px}
+  .nac-chips{text-align:center;margin-bottom:4px}
+  .nac-chip{display:inline-block;background:#fff;border:1.5px solid #d4c08a;border-radius:16px;padding:2px 10px;font-size:10.5px;font-weight:700;color:#5a4a1e;margin:1px 3px;-webkit-print-color-adjust:exact}
   .nac-chip.rank{background:linear-gradient(135deg,#fef3cd,#fde18a);border-color:#c9a227;color:#7a5c00}
-  .nac-terms{display:table;width:100%;border-spacing:8px;border-collapse:separate;margin-bottom:13px}
-  .nac-term{display:table-cell;width:33.33%;background:#fff;border:1.5px solid #d4c08a;border-radius:12px;padding:12px 6px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.05);-webkit-print-color-adjust:exact}
-  .nac-term .t-label{font-size:10.5px;color:#9a7a1a;font-weight:700;margin-bottom:5px}
-  .nac-term .t-score{font-size:26px;font-weight:900;color:#0d2645;line-height:1}
-  .nac-term .t-max{font-size:9.5px;color:#8a7e60;margin-top:2px}
-  .nac-term .t-pct{font-size:10.5px;font-weight:700;color:#bb9320;margin-top:3px}
-  .nac-total{display:table;width:100%;background:linear-gradient(135deg,#0d2645,#22518c);border-radius:14px;overflow:hidden;margin-bottom:13px;box-shadow:0 5px 16px rgba(13,38,69,.3);-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .nac-total-seal{display:table-cell;vertical-align:middle;width:118px;text-align:center;border-left:1px dashed rgba(201,162,39,.42);padding:12px 8px}
-  .nac-ring{width:76px;height:76px;border-radius:50%;border:4px solid #c9a227;background:rgba(255,255,255,.08);margin:0 auto 7px;display:table;-webkit-print-color-adjust:exact}
-  .nac-ring span{display:table-cell;vertical-align:middle;text-align:center;font-size:20px;font-weight:900;color:#fff}
-  .nac-grade{display:inline-block;font-size:13px;font-weight:900;color:#0d2645;background:linear-gradient(135deg,#edc858,#c9a227);padding:4px 16px;border-radius:20px;-webkit-print-color-adjust:exact}
-  .nac-total-main{display:table-cell;vertical-align:middle;padding:14px 16px;text-align:center}
-  .nac-total-label{font-size:11.5px;color:rgba(255,255,255,.95);font-weight:700;margin-bottom:4px}
-  .nac-total-score{font-size:44px;font-weight:900;color:#f1d175;line-height:1}
-  .nac-total-max{font-size:11.5px;color:rgba(255,255,255,.92);font-weight:700;margin-top:3px}
-  .nac-teachers{background:#fef9ed;border:1px solid #e8c04a;border-radius:10px;padding:8px 12px;margin-bottom:12px;text-align:center;-webkit-print-color-adjust:exact}
-  .nac-teachers .lbl{font-size:9.5px;font-weight:700;color:#9a7a1a;margin-bottom:6px}
-  .nac-tchip{display:inline-block;background:#fff;border:1px solid #d4c08a;border-radius:16px;padding:2px 9px;font-size:9.5px;font-weight:700;color:#5a3d00;margin:2px}
-  .nac-foot{display:table;width:100%;margin-top:8px}
-  .nac-sign{display:table-cell;width:33.33%;vertical-align:bottom;text-align:center;padding:0 6px}
-  .nac-sign .line{border-bottom:2px solid #c9a227;margin:28px 6px 6px}
-  .nac-sign .role{font-size:10.5px;color:#6b5e3e;font-weight:700}
-  .nac-seal{width:62px;height:62px;border-radius:50%;border:3px double #c9a227;margin:0 auto 4px;display:table;background:radial-gradient(circle,#fffdf3,#f8edcc);-webkit-print-color-adjust:exact}
-  .nac-seal span{display:table-cell;vertical-align:middle;text-align:center;font-size:25px;color:#c9a227;font-family:'Amiri',serif}
-  .nac-date{font-size:9px;color:#9a8e6e;margin-top:3px}
-  .nac-credit{text-align:center;font-size:8.5px;color:#bba; color:#b8a878;margin-top:11px}
+  .nac-terms{display:table;width:100%;border-spacing:5px;border-collapse:separate;margin-bottom:4px}
+  .nac-term{display:table-cell;width:33.33%;background:#fff;border:1.5px solid #d4c08a;border-radius:9px;padding:6px 3px;text-align:center;box-shadow:0 2px 5px rgba(0,0,0,.05);-webkit-print-color-adjust:exact}
+  .nac-term .t-label{font-size:9.5px;color:#9a7a1a;font-weight:700;margin-bottom:2px}
+  .nac-term .t-score{font-size:21px;font-weight:900;color:#0d2645;line-height:1}
+  .nac-term .t-max{font-size:8.5px;color:#8a7e60;margin-top:1px}
+  .nac-term .t-pct{font-size:9.5px;font-weight:700;color:#bb9320;margin-top:1px}
+  .nac-total{display:table;width:100%;background:linear-gradient(135deg,#0d2645,#22518c);border-radius:11px;overflow:hidden;margin-bottom:4px;box-shadow:0 3px 12px rgba(13,38,69,.3);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .nac-total-seal{display:table-cell;vertical-align:middle;width:95px;text-align:center;border-left:1px dashed rgba(201,162,39,.42);padding:6px 4px}
+  .nac-ring{width:56px;height:56px;border-radius:50%;border:3px solid #c9a227;background:rgba(255,255,255,.08);margin:0 auto 3px;display:table;-webkit-print-color-adjust:exact}
+  .nac-ring span{display:table-cell;vertical-align:middle;text-align:center;font-size:16px;font-weight:900;color:#fff}
+  .nac-grade{display:inline-block;font-size:11px;font-weight:900;color:#0d2645;background:linear-gradient(135deg,#edc858,#c9a227);padding:2px 12px;border-radius:14px;-webkit-print-color-adjust:exact}
+  .nac-total-main{display:table-cell;vertical-align:middle;padding:6px 12px;text-align:center}
+  .nac-total-label{font-size:10.5px;color:rgba(255,255,255,.95);font-weight:700;margin-bottom:1px}
+  .nac-total-score{font-size:34px;font-weight:900;color:#f1d175;line-height:1}
+  .nac-total-max{font-size:10px;color:rgba(255,255,255,.92);font-weight:700;margin-top:1px}
+  .nac-teachers{background:#fef9ed;border:1px solid #e8c04a;border-radius:7px;padding:4px 8px;margin-bottom:4px;text-align:center;-webkit-print-color-adjust:exact}
+  .nac-teachers .lbl{font-size:9px;font-weight:700;color:#9a7a1a;margin-bottom:3px}
+  .nac-tchip{display:inline-block;background:#fff;border:1px solid #d4c08a;border-radius:12px;padding:1px 7px;font-size:8.5px;font-weight:700;color:#5a3d00;margin:1px}
+  .nac-foot{display:table;width:100%;margin-top:2px}
+  .nac-sign{display:table-cell;width:33.33%;vertical-align:bottom;text-align:center;padding:0 4px}
+  .nac-sign .line{border-bottom:2px solid #c9a227;margin:14px 4px 3px}
+  .nac-sign .role{font-size:9.5px;color:#6b5e3e;font-weight:700}
+  .nac-seal{width:44px;height:44px;border-radius:50%;border:2px double #c9a227;margin:0 auto 2px;display:table;background:radial-gradient(circle,#fffdf3,#f8edcc);-webkit-print-color-adjust:exact}
+  .nac-seal span{display:table-cell;vertical-align:middle;text-align:center;font-size:19px;color:#c9a227;font-family:'Amiri',serif}
+  .nac-date{font-size:8px;color:#9a8e6e;margin-top:1px}
+  .nac-credit{text-align:center;font-size:7.5px;color:#b8a878;margin-top:3px;opacity:.8}
 
   /* ── النسخة الداكنة الفاخرة (luxe) للشهادة السنوية ── */
   .annual-cert.nac.dark{background:linear-gradient(160deg,#0d2645 0%,#173a66 55%,#22518c 100%);color:#f6e9c4;box-shadow:0 14px 50px rgba(0,0,0,.45)}
@@ -17741,6 +17741,43 @@ body{font-family:'Cairo',sans-serif;direction:rtl;background:#fff;color:#000;}
   .annual-cert.nac.dark .nac-date{color:rgba(246,233,196,.9);font-weight:600}
   .annual-cert.nac.dark .nac-credit{color:rgba(237,200,88,.6)}
 
+  /* ── تنسيق الطباعة الخاص بالشهادة السنوية A4 كاملة ── */
+  @media print {
+    @page { size: A4 portrait; margin: 0 !important; }
+    html, body { background: #fff !important; margin: 0 !important; padding: 0 !important; width: 210mm !important; height: 100% !important; }
+    .annual-cert.nac {
+      width: 210mm !important;
+      max-width: 210mm !important;
+      min-height: 0 !important;
+      height: 295mm !important;
+      max-height: 295mm !important;
+      margin: 0 !important;
+      padding: 6mm 10mm 4mm 10mm !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      page-break-after: always !important;
+      break-after: page !important;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+      overflow: hidden !important;
+      box-sizing: border-box !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: space-between !important;
+    }
+    .annual-cert.nac:last-child, .annual-cert.nac:last-of-type {
+      page-break-after: auto !important;
+      break-after: auto !important;
+    }
+    .annual-cert.nac::before { inset: 4mm !important; border-radius: 4px !important; }
+    .annual-cert.nac::after { inset: 6mm !important; border-radius: 3px !important; }
+    .nac-corner.tl { top: 7mm !important; right: 7mm !important; }
+    .nac-corner.tr { top: 7mm !important; left: 7mm !important; }
+    .nac-corner.bl { bottom: 7mm !important; right: 7mm !important; }
+    .nac-corner.br { bottom: 7mm !important; left: 7mm !important; }
+    .nac-inner { padding: 0 !important; height: 100% !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; box-sizing: border-box !important; }
+    body > .dev-credit, .print-credit, .dev-credit { display: none !important; }
+  }
 </style>`;
         }
 
@@ -18718,19 +18755,24 @@ html,body{font-family:'Cairo','Tajawal','Segoe UI',Tahoma,Arial,sans-serif;direc
         function printCertsNativeRaw(bodyHtml, title) {
             const w = window.open('', '_blank');
             if (!w) { showToast('🖨️ جاري تجهيز الطباعة…'); return; }
+            const isAnnual = bodyHtml.includes('annual-cert');
             const printCss = '<style>'
-                + '@page { size: A4 portrait; margin: 6mm; }'
-                + '.annual-cert.nac{width:100% !important;max-width:100% !important;margin:0 auto 6mm !important;box-sizing:border-box !important;box-shadow:none !important}'
+                + '@page { size: A4 portrait; margin: 0; }'
+                + 'html, body { background:#fff !important; margin:0 !important; padding:0 !important; width:210mm; }'
+                + '.annual-cert.nac{width:210mm !important;max-width:210mm !important;height:295mm !important;max-height:295mm !important;min-height:0 !important;margin:0 auto !important;padding:6mm 10mm 4mm 10mm !important;box-sizing:border-box !important;box-shadow:none !important;border-radius:0 !important;display:flex !important;flex-direction:column !important;justify-content:space-between !important;page-break-after:always !important;break-after:page !important;page-break-inside:avoid !important;break-inside:avoid !important;overflow:hidden !important;}'
+                + '.annual-cert.nac:last-of-type, .annual-cert.nac:last-child { page-break-after: auto !important; break-after: auto !important; }'
+                + '.annual-cert.nac .nac-inner { padding:0 !important; height:100% !important; display:flex !important; flex-direction:column !important; justify-content:space-between !important; box-sizing:border-box !important; }'
                 + '@media print {'
-                + '  html, body { background:#fff !important; }'
-                + '  /* v35: شهادتين لكل صفحة A4 بدون تداخل أو تقطيع */'
+                + '  @page { size: A4 portrait; margin: 0 !important; }'
+                + '  html, body { background:#fff !important; margin:0 !important; padding:0 !important; width:210mm !important; height:100% !important; }'
                 + '  .cert-wrap, .cert { page-break-inside: avoid !important; break-inside: avoid !important; -webkit-column-break-inside: avoid !important; page-break-after: auto !important; break-after: auto !important; height: 135mm !important; max-height: 135mm !important; box-sizing: border-box; margin: 0 0 4mm 0 !important; padding-bottom: 4mm !important; border-bottom: 1.5px dashed #c9a227 !important; overflow: hidden !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }'
                 + '  .cert-wrap:nth-of-type(2n), .cert:nth-of-type(2n) { page-break-after: always !important; break-after: page !important; border-bottom: none !important; }'
                 + '  .cert-wrap:last-of-type, .cert:last-of-type { page-break-after: auto !important; break-after: auto !important; }'
-                + '  .annual-cert, .cert-card { page-break-inside: avoid !important; break-inside: avoid !important; page-break-after: always !important; break-after: page !important; margin: 0 0 4mm 0 !important; }'
+                + '  .annual-cert, .cert-card { page-break-inside: avoid !important; break-inside: avoid !important; page-break-after: always !important; break-after: page !important; margin: 0 !important; }'
                 + '  .cert-wrap:last-of-type, .cert:last-of-type { border-bottom: none !important; }'
                 + '  .annual-cert:last-of-type, .cert-card:last-of-type { page-break-after: auto !important; break-after: auto !important; }'
-                + '  /* الشهادات المصغّرة: شبكة، لذا تجنّب القسر بصفحة لكل واحدة */'
+                + '  .annual-cert.nac { width:210mm !important; max-width:210mm !important; height:295mm !important; max-height:295mm !important; min-height:0 !important; margin:0 !important; padding:6mm 10mm 4mm 10mm !important; border-radius:0 !important; box-shadow:none !important; page-break-after:always !important; break-after:page !important; page-break-inside:avoid !important; break-inside:avoid !important; overflow:hidden !important; display:flex !important; flex-direction:column !important; justify-content:space-between !important; }'
+                + '  .annual-cert.nac .nac-inner { padding:0 !important; height:100% !important; display:flex !important; flex-direction:column !important; justify-content:space-between !important; box-sizing:border-box !important; }'
                 + '  .mini-cert { page-break-inside: avoid !important; break-inside: avoid !important; margin-bottom: 6px !important; }'
                 + '  .hdr, .sec-title, h1, h2, h3 { page-break-after: avoid !important; break-after: avoid !important; }'
                 + '  table { page-break-inside: auto !important; break-inside: auto !important; }'
@@ -18740,14 +18782,14 @@ html,body{font-family:'Cairo','Tajawal','Segoe UI',Tahoma,Arial,sans-serif;direc
                 + '  img { page-break-inside: avoid !important; break-inside: avoid !important; max-width:100% !important; }'
                 + '  p, li { orphans: 3; widows: 3; }'
                 + '  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }'
-                + '  .dev-credit { position: fixed; bottom: 2mm; left: 0; right: 0; text-align: center; font-size: 8px; color: #aaa; font-family: \'Cairo\',sans-serif; }'
+                + '  .dev-credit { display:none !important; }'
                 + '}'
                 + '@media screen { body { background:#f0f0f0; padding:20px; } .dev-credit{ text-align:center; font-size:9px; color:#aaa; margin-top:20px; padding:8px; border-top:1px solid #eee; font-family: \'Cairo\',sans-serif; } }'
                 + '</style>';
             const fontsLink = '<link rel="preconnect" href="https://fonts.googleapis.com">'
                 + '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
                 + '<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Amiri:wght@400;700&display=swap" rel="stylesheet">';
-            const devCredit = '<div class="dev-credit" dir="rtl">تصميم وتطوير: ابانوب فايز</div>';
+            const devCredit = isAnnual ? '' : '<div class="dev-credit" dir="rtl">تصميم وتطوير: ابانوب فايز</div>';
             const doc = '<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8">'
                 + '<title>' + (title || 'شهادات') + '</title>'
                 + fontsLink + printCss
@@ -18758,6 +18800,7 @@ html,body{font-family:'Cairo','Tajawal','Segoe UI',Tahoma,Arial,sans-serif;direc
             w.document.write(doc);
             w.document.close();
         }
+
         function printAnnualByStage() { const st = (document.getElementById('print-stage-annual') || { value: '' }).value; const html = st ? buildAnnualHTML(st) : _buildAllStagesHTML(s => buildAnnualHTML(s)); if (!html) { showToast('⚠️ لا يوجد طلاب'); return; } printCertsNativeRaw(html, st ? `النتيجة السنوية - ${st}` : 'النتيجة السنوية - كل المراحل'); }
         function printAbsence() { const st = (document.getElementById('print-stage-abs') || { value: '' }).value, mo = +((document.getElementById('print-month-abs') || { value: 9 }).value); const months = ['', 'يناير', 'فبراير', 'مارس', 'إبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر']; const html = st ? buildAbsenceHTML(st, mo) : _buildAllStagesHTML(s => buildAbsenceHTML(s, mo)); if (!html) { showToast('⚠️ لا يوجد طلاب'); return; } setPrint(html, st ? `غياب_${st}_${months[mo] || mo}` : `غياب_كل_المراحل_${months[mo] || mo}`, 'landscape'); }
         function printBlankAbsence() {
@@ -20106,12 +20149,22 @@ html,body{font-family:'Cairo','Tajawal','Segoe UI',Tahoma,Arial,sans-serif;direc
                         chunks.push(efFixCss + efPages[i].outerHTML);
                     }
                 } else if (annualCerts.length > 0) {
-                    // ✅ نجمع كل وسوم <style> (وليس الأول فقط) حتى لا تُفقد أنماط الشهادة عند وجود pageBreakCss قبلها
+                    // ✅ نجمع كل وسوم <style> لضمان بقاء أنماط الشهادة السنوية كاملة بدون هوامش بيضاء
                     const cssHtml = Array.from(tmpDoc.querySelectorAll('style')).map(s => '<style>' + s.textContent + '</style>').join('');
+                    const _acFix = '<style>'
+                        + 'html,body{margin:0!important;padding:0!important;background:#fff!important;width:794px!important;height:1123px!important;overflow:hidden!important;}'
+                        + '.annual-cert.nac{width:794px!important;max-width:794px!important;height:1123px!important;max-height:1123px!important;min-height:1123px!important;margin:0!important;padding:32px 42px 24px 42px!important;box-sizing:border-box!important;box-shadow:none!important;border-radius:0!important;display:flex!important;flex-direction:column!important;justify-content:space-between!important;overflow:hidden!important;}'
+                        + '.annual-cert.nac .nac-inner{padding:0!important;height:100%!important;display:flex!important;flex-direction:column!important;justify-content:space-between!important;box-sizing:border-box!important;}'
+                        + '.annual-cert.nac::before{inset:16px!important;border-radius:6px!important;}'
+                        + '.annual-cert.nac::after{inset:24px!important;border-radius:4px!important;}'
+                        + '.nac-corner.tl{top:28px!important;right:28px!important;}'
+                        + '.nac-corner.tr{top:28px!important;left:28px!important;}'
+                        + '.nac-corner.bl{bottom:28px!important;right:28px!important;}'
+                        + '.nac-corner.br{bottom:28px!important;left:28px!important;}'
+                        + '</style>';
                     chunks = [];
                     for (let i = 0; i < annualCerts.length; i++) {
-                        const _acFix = '<style>.annual-cert.nac{width:760px !important;max-width:760px !important;margin:0 auto !important;box-shadow:none !important}.annual-cert.nac .nac-wm{display:none !important}.annual-cert.nac::before,.annual-cert.nac::after{display:none !important}</style>';
-                        chunks.push(cssHtml + _acFix + '<div style="padding:16px 18px;width:794px">' + annualCerts[i].outerHTML + '</div>');
+                        chunks.push(cssHtml + _acFix + annualCerts[i].outerHTML);
                     }
                 } else {
                     // ✅ v37: الشهادات التفصيلية والسنوية التفصيلية — كل .cert-page صفحة PDF مستقلة (لا تقطيع/تداخل)
